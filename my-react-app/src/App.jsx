@@ -50,6 +50,8 @@ function App() {
         </main>
 
         <Navbar activeTab={activeTab} onNavigate={handleNavigate} />
+        {activeTab === 'newpage' && <NewPage onNavigate={handleNavigate} />}
+
       </div>
     </BudgetProvider>
   );
