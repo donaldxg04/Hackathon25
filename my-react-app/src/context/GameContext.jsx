@@ -12,12 +12,28 @@ export const useGame = () => {
 
 export const GameProvider = ({ children }) => {
   const [gameState, setGameState] = useState({
-    currentDate: "May 2nd, 2011",
+    currentDate: new Date(2009, 0, 1), // January 1, 2009
     player: {
       name: "John Doe",
       age: 25,
       occupation: "Software Developer",
-      location: "San Francisco, CA"
+      location: "San Francisco, CA",
+      housingStatus: "renting" // "renting" or "owner"
+    },
+    income: {
+      salary: 8000,
+      investments: 0,
+      other: 0
+    },
+    expenses: {
+      rent: 1500, // Only applicable when renting
+      mortgage: 0, // Only applicable when owning
+      utilities: 200,
+      food: 600,
+      transportation: 300,
+      insurance: 250,
+      entertainment: 300,
+      other: 350
     },
     stats: {
       health: 80,
@@ -25,78 +41,32 @@ export const GameProvider = ({ children }) => {
       happiness: 65
     },
     finance: {
-      netWorth: 1568960.98,
+      netWorth: 50000,
       netWorthHistory: [
-        { month: 'Jun', value: 950000 },
-        { month: 'Jul', value: 1020000 },
-        { month: 'Aug', value: 1150000 },
-        { month: 'Sep', value: 1100000 },
-        { month: 'Oct', value: 1250000 },
-        { month: 'Nov', value: 1320000 },
-        { month: 'Dec', value: 1380000 },
-        { month: 'Jan', value: 1420000 },
-        { month: 'Feb', value: 1490000 },
-        { month: 'Mar', value: 1530000 },
-        { month: 'Apr', value: 1545000 },
-        { month: 'May', value: 1568960.98 }
+        { month: 'Jan 2009', value: 50000 }
       ],
       assetAllocation: {
-        realEstate: 500000,
-        checking: 25000,
-        investments: 750000,
-        crypto: 10000,
-        other: 50000
+        checking: 50000,
+        investments: 0,
+        crypto: 0,
+        other: 0
       }
     },
     markets: {
-      cash: 25000,
       positions: [
-        { symbol: 'ACME', shares: 50, price: 120 },
-        { symbol: 'TECH', shares: 10, price: 300 },
-        { symbol: 'CRYPTO_ETF', shares: 5, price: 800 }
+        { symbol: 'ACME', shares: 0, price: 100 },
+        { symbol: 'TECH', shares: 0, price: 250 },
+        { symbol: 'CRYPTO_ETF', shares: 0, price: 50 }
       ],
       priceHistory: {
         ACME: [
-          { month: 'Jun', value: 95 },
-          { month: 'Jul', value: 98 },
-          { month: 'Aug', value: 102 },
-          { month: 'Sep', value: 105 },
-          { month: 'Oct', value: 110 },
-          { month: 'Nov', value: 112 },
-          { month: 'Dec', value: 115 },
-          { month: 'Jan', value: 118 },
-          { month: 'Feb', value: 116 },
-          { month: 'Mar', value: 119 },
-          { month: 'Apr', value: 121 },
-          { month: 'May', value: 120 }
+          { month: 'Jan 2009', value: 100 }
         ],
         TECH: [
-          { month: 'Jun', value: 250 },
-          { month: 'Jul', value: 260 },
-          { month: 'Aug', value: 270 },
-          { month: 'Sep', value: 265 },
-          { month: 'Oct', value: 275 },
-          { month: 'Nov', value: 280 },
-          { month: 'Dec', value: 285 },
-          { month: 'Jan', value: 290 },
-          { month: 'Feb', value: 295 },
-          { month: 'Mar', value: 292 },
-          { month: 'Apr', value: 298 },
-          { month: 'May', value: 300 }
+          { month: 'Jan 2009', value: 250 }
         ],
         CRYPTO_ETF: [
-          { month: 'Jun', value: 600 },
-          { month: 'Jul', value: 650 },
-          { month: 'Aug', value: 700 },
-          { month: 'Sep', value: 680 },
-          { month: 'Oct', value: 720 },
-          { month: 'Nov', value: 750 },
-          { month: 'Dec', value: 780 },
-          { month: 'Jan', value: 790 },
-          { month: 'Feb', value: 775 },
-          { month: 'Mar', value: 785 },
-          { month: 'Apr', value: 795 },
-          { month: 'May', value: 800 }
+          { month: 'Jan 2009', value: 50 }
         ]
       }
     }
@@ -170,17 +140,13 @@ export const GameProvider = ({ children }) => {
       const newAllocation = { ...prev.finance.assetAllocation };
       newAllocation[fromKey] -= amount;
       newAllocation[toKey] += amount;
-      
-      const newMarkets = { ...prev.markets };
-      newMarkets.cash = newAllocation.checking;
 
       return {
         ...prev,
         finance: {
           ...prev.finance,
           assetAllocation: newAllocation
-        },
-        markets: newMarkets
+        }
       };
     });
 
@@ -206,24 +172,26 @@ export const GameProvider = ({ children }) => {
       const price = position.price;
       const cost = price * shares;
 
-      if (prev.markets.cash < cost) {
+      // Check if investments allocation has enough cash
+      if (prev.finance.assetAllocation.investments < cost) {
         return prev; // Will be handled by caller
       }
 
-      const newMarkets = { ...prev.markets };
-      newMarkets.cash -= cost;
-      
-      const newPositions = prev.markets.positions.map(p => 
+      // Update positions
+      const newPositions = prev.markets.positions.map(p =>
         p.symbol === symbol ? { ...p, shares: p.shares + shares } : p
       );
-      newMarkets.positions = newPositions;
 
+      // Deduct from investments allocation
       const newAllocation = { ...prev.finance.assetAllocation };
-      newAllocation.checking = newMarkets.cash;
+      newAllocation.investments -= cost;
 
       return {
         ...prev,
-        markets: newMarkets,
+        markets: {
+          ...prev.markets,
+          positions: newPositions
+        },
         finance: {
           ...prev.finance,
           assetAllocation: newAllocation
@@ -249,20 +217,21 @@ export const GameProvider = ({ children }) => {
       const price = position.price;
       const proceeds = price * shares;
 
-      const newMarkets = { ...prev.markets };
-      newMarkets.cash += proceeds;
-      
-      const newPositions = prev.markets.positions.map(p => 
+      // Update positions (remove if shares go to 0)
+      const newPositions = prev.markets.positions.map(p =>
         p.symbol === symbol ? { ...p, shares: p.shares - shares } : p
-      ).filter(p => p.shares > 0);
-      newMarkets.positions = newPositions;
+      );
 
+      // Add proceeds to investments allocation
       const newAllocation = { ...prev.finance.assetAllocation };
-      newAllocation.checking = newMarkets.cash;
+      newAllocation.investments += proceeds;
 
       return {
         ...prev,
-        markets: newMarkets,
+        markets: {
+          ...prev.markets,
+          positions: newPositions
+        },
         finance: {
           ...prev.finance,
           assetAllocation: newAllocation
@@ -279,15 +248,143 @@ export const GameProvider = ({ children }) => {
     return position ? position.price : 0;
   }, [gameState.markets.positions]);
 
+  const formatDate = (date) => {
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  };
+
+  const formatMonthYear = (date) => {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  const advanceMonth = useCallback(() => {
+    setGameState(prev => {
+      // Create new date (next month)
+      const newDate = new Date(prev.currentDate);
+      newDate.setMonth(newDate.getMonth() + 1);
+
+      // Check if year changed to increment age
+      const ageIncrement = newDate.getFullYear() > prev.currentDate.getFullYear() ? 1 : 0;
+
+      // Calculate total income
+      const totalIncome = Object.values(prev.income).reduce((sum, val) => sum + val, 0);
+
+      // Calculate total expenses (use rent if renting, mortgage if owner)
+      let totalExpenses = 0;
+      for (const [key, value] of Object.entries(prev.expenses)) {
+        if (key === 'rent' && prev.player.housingStatus === 'renting') {
+          totalExpenses += value;
+        } else if (key === 'mortgage' && prev.player.housingStatus === 'owner') {
+          totalExpenses += value;
+        } else if (key !== 'rent' && key !== 'mortgage') {
+          totalExpenses += value;
+        }
+      }
+
+      // Calculate net cash flow
+      const netCashFlow = totalIncome - totalExpenses;
+
+      // Update checking account
+      const newChecking = prev.finance.assetAllocation.checking + netCashFlow;
+      const newAllocation = {
+        ...prev.finance.assetAllocation,
+        checking: newChecking
+      };
+
+      // Update stock prices with some random variation (-5% to +5%)
+      const newPositions = prev.markets.positions.map(position => ({
+        ...position,
+        price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
+      }));
+
+      // Calculate new net worth
+      let newNetWorth = 0;
+      for (const key in newAllocation) {
+        newNetWorth += newAllocation[key];
+      }
+      newPositions.forEach(position => {
+        newNetWorth += position.shares * position.price;
+      });
+
+      // Add to history (keep last 12 months)
+      const newHistory = [...prev.finance.netWorthHistory, {
+        month: formatMonthYear(newDate),
+        value: newNetWorth
+      }];
+      if (newHistory.length > 12) {
+        newHistory.shift();
+      }
+
+      // Update price history for each stock
+      const newPriceHistory = {};
+      for (const symbol in prev.markets.priceHistory) {
+        const position = newPositions.find(p => p.symbol === symbol);
+        const history = [...prev.markets.priceHistory[symbol], {
+          month: formatMonthYear(newDate),
+          value: position ? position.price : 0
+        }];
+        if (history.length > 12) {
+          history.shift();
+        }
+        newPriceHistory[symbol] = history;
+      }
+
+      return {
+        ...prev,
+        currentDate: newDate,
+        player: {
+          ...prev.player,
+          age: prev.player.age + ageIncrement
+        },
+        finance: {
+          ...prev.finance,
+          netWorth: newNetWorth,
+          netWorthHistory: newHistory,
+          assetAllocation: newAllocation
+        },
+        markets: {
+          ...prev.markets,
+          positions: newPositions,
+          priceHistory: newPriceHistory
+        }
+      };
+    });
+  }, []);
+
+  const getTotalIncome = useCallback(() => {
+    return Object.values(gameState.income).reduce((sum, val) => sum + val, 0);
+  }, [gameState.income]);
+
+  const getTotalExpenses = useCallback(() => {
+    let total = 0;
+    for (const [key, value] of Object.entries(gameState.expenses)) {
+      if (key === 'rent' && gameState.player.housingStatus === 'renting') {
+        total += value;
+      } else if (key === 'mortgage' && gameState.player.housingStatus === 'owner') {
+        total += value;
+      } else if (key !== 'rent' && key !== 'mortgage') {
+        total += value;
+      }
+    }
+    return total;
+  }, [gameState.expenses, gameState.player.housingStatus]);
+
   const value = {
     gameState,
     formatCurrency,
+    formatDate,
     recalculateNetWorth,
     updateStats,
     transferFunds,
     buyStock,
     sellStock,
-    getStockPrice
+    getStockPrice,
+    advanceMonth,
+    getTotalIncome,
+    getTotalExpenses
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

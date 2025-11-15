@@ -12,7 +12,7 @@ import DecisionModal from './DecisionModal';
 
 
 const Dashboard = () => {
-  const { gameState } = useGame();
+  const { gameState, formatDate, advanceMonth } = useGame();
   const [activeModal, setActiveModal] = useState(null);
   const [hasShownDecision, setHasShownDecision] = useState(false);
 
@@ -43,7 +43,10 @@ const Dashboard = () => {
 
       {/* Right Column */}
       <div className="right-column">
-        <div className="date-display">{gameState.currentDate}</div>
+        <div className="date-container">
+          <div className="date-display">{formatDate(gameState.currentDate)}</div>
+          <button className="btn-next-month" onClick={advanceMonth}>Next Month →</button>
+        </div>
         <PlayerCard />
         <MarketWatchCard onClick={() => openModal('investing')} />
       </div>

@@ -27,6 +27,37 @@ ChartJS.register(
 const NetWorthCard = ({ onClick }) => {
   const { gameState, formatCurrency } = useGame();
 
+  // Calculate max value to determine appropriate scale
+  const maxValue = Math.max(...gameState.finance.netWorthHistory.map(item => item.value));
+  const minValue = Math.min(...gameState.finance.netWorthHistory.map(item => item.value));
+
+  // Determine scale and formatting function
+  let formatValue;
+  let suggestedMin;
+  let suggestedMax;
+
+  if (maxValue >= 10000000) {
+    // Tens of millions or more - show as millions
+    formatValue = (value) => '$' + (value / 1000000).toFixed(1) + 'M';
+    suggestedMin = Math.floor(minValue / 1000000) * 1000000;
+    suggestedMax = Math.ceil(maxValue / 1000000) * 1000000;
+  } else if (maxValue >= 1000000) {
+    // Millions - show as millions with more precision
+    formatValue = (value) => '$' + (value / 1000000).toFixed(2) + 'M';
+    suggestedMin = Math.floor(minValue / 500000) * 500000;
+    suggestedMax = Math.ceil(maxValue / 500000) * 500000;
+  } else if (maxValue >= 100000) {
+    // Hundreds of thousands - show as thousands
+    formatValue = (value) => '$' + (value / 1000).toFixed(0) + 'K';
+    suggestedMin = Math.floor(minValue / 50000) * 50000;
+    suggestedMax = Math.ceil(maxValue / 50000) * 50000;
+  } else {
+    // Tens of thousands or less - show as thousands
+    formatValue = (value) => '$' + (value / 1000).toFixed(1) + 'K';
+    suggestedMin = Math.floor(minValue / 10000) * 10000;
+    suggestedMax = Math.ceil(maxValue / 10000) * 10000;
+  }
+
   const chartData = {
     labels: gameState.finance.netWorthHistory.map(item => item.month),
     datasets: [{
@@ -80,6 +111,8 @@ const NetWorthCard = ({ onClick }) => {
         }
       },
       y: {
+        min: suggestedMin,
+        max: suggestedMax,
         grid: {
           color: 'rgba(255, 255, 255, 0.05)',
           drawBorder: false
@@ -89,9 +122,7 @@ const NetWorthCard = ({ onClick }) => {
           font: {
             size: 11
           },
-          callback: function(value) {
-            return '$' + (value / 1000000).toFixed(1) + 'M';
-          }
+          callback: formatValue
         }
       }
     }

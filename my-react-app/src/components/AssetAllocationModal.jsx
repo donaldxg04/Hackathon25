@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const ASSET_LABELS = {
   realEstate: 'Real Estate',
@@ -9,10 +18,46 @@ const ASSET_LABELS = {
   other: 'Other Assets'
 };
 
+const ASSET_COLORS = {
+  checking: '#22c55e',
+  investments: '#f59e0b',
+  crypto: '#ec4899',
+  other: '#8b5cf6',
+  realEstate: '#3b82f6'
+};
+
+const INCOME_LABELS = {
+  salary: 'Salary',
+  investments: 'Investment Income',
+  other: 'Other Income'
+};
+
+const EXPENSE_LABELS = {
+  rent: 'Rent',
+  mortgage: 'Mortgage',
+  utilities: 'Utilities',
+  food: 'Food & Groceries',
+  transportation: 'Transportation',
+  insurance: 'Insurance',
+  entertainment: 'Entertainment',
+  other: 'Other Expenses'
+};
+
 const AssetAllocationModal = ({ onClose }) => {
-  const { gameState, formatCurrency, transferFunds } = useGame();
-  const [fromAccount, setFromAccount] = useState('realEstate');
-  const [toAccount, setToAccount] = useState('checking');
+  const { gameState, formatCurrency, transferFunds, getTotalIncome, getTotalExpenses } = useGame();
+
+  // Get available accounts (exclude real estate if renting)
+  const availableAccounts = Object.keys(gameState.finance.assetAllocation);
+  const getAssetLabels = () => {
+    const labels = {};
+    availableAccounts.forEach(key => {
+      labels[key] = ASSET_LABELS[key];
+    });
+    return labels;
+  };
+
+  const [fromAccount, setFromAccount] = useState(availableAccounts[0] || 'checking');
+  const [toAccount, setToAccount] = useState(availableAccounts[1] || 'investments');
   const [transferAmount, setTransferAmount] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -48,76 +93,205 @@ const AssetAllocationModal = ({ onClose }) => {
     }
   };
 
+  const totalIncome = getTotalIncome();
+  const totalExpenses = getTotalExpenses();
+  const netCashFlow = totalIncome - totalExpenses;
+  const assetLabels = getAssetLabels();
+
+  // Prepare pie chart data
+  const assetAllocation = gameState.finance.assetAllocation;
+  const chartLabels = [];
+  const chartData = [];
+  const chartColors = [];
+
+  Object.entries(assetAllocation).forEach(([key, value]) => {
+    if (value > 0) {
+      chartLabels.push(assetLabels[key]);
+      chartData.push(value);
+      chartColors.push(ASSET_COLORS[key]);
+    }
+  });
+
+  const pieChartData = {
+    labels: chartLabels,
+    datasets: [{
+      data: chartData,
+      backgroundColor: chartColors,
+      borderColor: '#2a2a2a',
+      borderWidth: 2
+    }]
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: {
+          color: '#a8d8ea',
+          padding: 15,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(42, 42, 42, 0.95)',
+        titleColor: '#4ade80',
+        bodyColor: '#fff',
+        borderColor: '#4ade80',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = formatCurrency(context.parsed);
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((context.parsed / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    }
+  };
+
   return (
     <div className="modal active">
       <div className="modal-backdrop" onClick={onClose}></div>
-      <div className="modal-content">
+      <div className="modal-content modal-fullscreen">
         <div className="modal-header">
-          <h2>Asset Management</h2>
+          <h2>Financial Dashboard</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
-        <div className="modal-body">
-          <p>Transfer funds between your asset accounts:</p>
-
-          <div className="asset-transfer-form">
-            <div className="form-group">
-              <label htmlFor="fromAccount">From Account:</label>
-              <select
-                id="fromAccount"
-                className="form-control"
-                value={fromAccount}
-                onChange={(e) => setFromAccount(e.target.value)}
-              >
-                {Object.keys(ASSET_LABELS).map(key => (
-                  <option key={key} value={key}>{ASSET_LABELS[key]}</option>
-                ))}
-              </select>
+        <div className="modal-body financial-dashboard">
+          {/* Top Section: Cash Flow Summary */}
+          <div className="financial-summary">
+            <div className="summary-row">
+              <span className="summary-label">Monthly Income:</span>
+              <span className="summary-value positive">{formatCurrency(totalIncome)}</span>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="toAccount">To Account:</label>
-              <select
-                id="toAccount"
-                className="form-control"
-                value={toAccount}
-                onChange={(e) => setToAccount(e.target.value)}
-              >
-                {Object.keys(ASSET_LABELS).map(key => (
-                  <option key={key} value={key}>{ASSET_LABELS[key]}</option>
-                ))}
-              </select>
+            <div className="summary-row">
+              <span className="summary-label">Monthly Expenses:</span>
+              <span className="summary-value negative">{formatCurrency(totalExpenses)}</span>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="transferAmount">Amount:</label>
-              <input
-                type="number"
-                id="transferAmount"
-                className="form-control"
-                placeholder="Enter amount"
-                min="0"
-                step="0.01"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-              />
+            <div className="summary-row total">
+              <span className="summary-label">Net Monthly Cash Flow:</span>
+              <span className={`summary-value ${netCashFlow >= 0 ? 'positive' : 'negative'}`}>
+                {formatCurrency(netCashFlow)}
+              </span>
             </div>
-
-            <button className="btn-primary" onClick={handleTransfer}>Transfer</button>
           </div>
 
-          {message.text && (
-            <div className={`transfer-message ${message.type}`}>{message.text}</div>
-          )}
+          {/* Middle Section: 3 Column Layout */}
+          <div className="dashboard-grid">
+            {/* Income Breakdown */}
+            <div className="breakdown-section">
+              <h3>Income Breakdown</h3>
+              <div className="breakdown-list">
+                {Object.entries(gameState.income).map(([key, value]) => (
+                  <div key={key} className="breakdown-item">
+                    <span className="breakdown-label">{INCOME_LABELS[key]}:</span>
+                    <span className="breakdown-value positive">{formatCurrency(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <div className="current-balances">
-            <h3>Current Balances:</h3>
-            <div id="assetBalances">
-              {Object.entries(gameState.finance.assetAllocation).map(([key, value]) => (
-                <div key={key} className="balance-item">
-                  <span className="balance-label">{ASSET_LABELS[key]}:</span>
-                  <span className="balance-value">{formatCurrency(value)}</span>
+            {/* Asset Allocation Pie Chart */}
+            <div className="breakdown-section pie-chart-section">
+              <h3>Asset Allocation</h3>
+              <div className="pie-chart-container">
+                <Doughnut data={pieChartData} options={pieChartOptions} />
+              </div>
+            </div>
+
+            {/* Expenses Breakdown */}
+            <div className="breakdown-section">
+              <h3>Expenses Breakdown</h3>
+              <div className="breakdown-list">
+                {Object.entries(gameState.expenses).map(([key, value]) => {
+                  if (key === 'rent' && gameState.player.housingStatus !== 'renting') return null;
+                  if (key === 'mortgage' && gameState.player.housingStatus !== 'owner') return null;
+                  return (
+                    <div key={key} className="breakdown-item">
+                      <span className="breakdown-label">{EXPENSE_LABELS[key]}:</span>
+                      <span className="breakdown-value negative">{formatCurrency(value)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Section: Balances and Transfer */}
+          <div className="bottom-section">
+            {/* Account Balances */}
+            <div className="current-balances">
+              <h3>Account Balances</h3>
+              <div className="balance-list">
+                {Object.entries(gameState.finance.assetAllocation).map(([key, value]) => (
+                  <div key={key} className="balance-item-horizontal">
+                    <span className="balance-label">{assetLabels[key]}:</span>
+                    <span className="balance-value">{formatCurrency(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Transfer Section */}
+            <div className="asset-transfer-form">
+              <h3>Transfer Funds</h3>
+              <div className="transfer-inputs-compact">
+                <div className="form-group">
+                  <label htmlFor="fromAccount">From:</label>
+                  <select
+                    id="fromAccount"
+                    className="form-control"
+                    value={fromAccount}
+                    onChange={(e) => setFromAccount(e.target.value)}
+                  >
+                    {availableAccounts.map(key => (
+                      <option key={key} value={key}>{assetLabels[key]}</option>
+                    ))}
+                  </select>
                 </div>
-              ))}
+
+                <div className="form-group">
+                  <label htmlFor="toAccount">To:</label>
+                  <select
+                    id="toAccount"
+                    className="form-control"
+                    value={toAccount}
+                    onChange={(e) => setToAccount(e.target.value)}
+                  >
+                    {availableAccounts.map(key => (
+                      <option key={key} value={key}>{assetLabels[key]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="transferAmount">Amount:</label>
+                  <input
+                    type="number"
+                    id="transferAmount"
+                    className="form-control"
+                    placeholder="Enter amount"
+                    min="0"
+                    step="0.01"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                  />
+                </div>
+
+                <button className="btn-success" onClick={handleTransfer}>Transfer</button>
+              </div>
+
+              {message.text && (
+                <div className={`transfer-message ${message.type}`}>{message.text}</div>
+              )}
             </div>
           </div>
         </div>
