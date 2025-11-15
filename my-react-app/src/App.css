@@ -46,6 +46,8 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     color: #fff;
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 .card:hover {
@@ -58,6 +60,9 @@ body {
     margin-bottom: 10px;
     font-size: 16px;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Net Worth Card */
@@ -73,6 +78,8 @@ body {
     font-weight: bold;
     margin-bottom: 12px;
     text-align: center;
+    word-wrap: break-word;
+    overflow: hidden;
 }
 
 .chart-container {
@@ -138,22 +145,58 @@ body {
     align-items: center;
     gap: 4px;
     font-size: 11px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .legend-color {
     width: 12px;
     height: 12px;
     border-radius: 2px;
+    flex-shrink: 0;
 }
 
 /* Date Display */
+.date-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
 .date-display {
     font-size: 28px;
     font-weight: 700;
     color: #2a2a2a;
     text-align: right;
-    padding: 8px 0;
     text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+    flex: 1;
+}
+
+.btn-next-month {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.btn-next-month:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+}
+
+.btn-next-month:active {
+    transform: translateY(0);
 }
 
 /* Player Card */
@@ -168,18 +211,28 @@ body {
 .info-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 6px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 14px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .info-label {
     font-weight: 600;
     color: #a8d8ea;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .info-value {
     color: #fff;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 /* Stat Bars */
@@ -305,6 +358,29 @@ body {
     color: #fff;
 }
 
+.modal-fullscreen {
+    max-width: 95vw;
+    width: 95vw;
+    max-height: 92vh;
+    height: 92vh;
+    overflow: hidden;
+}
+
+.modal-fullscreen .modal-body {
+    height: calc(92vh - 80px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 24px;
+}
+
+.financial-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    min-width: 0;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -368,6 +444,10 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .date-container {
+        justify-content: center;
+    }
+
     .date-display {
         text-align: center;
         font-size: 28px;
@@ -396,8 +476,19 @@ body {
         padding: 16px;
     }
 
+    .date-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+
     .date-display {
-        font-size: 24px;
+        font-size: 22px;
+        text-align: center;
+    }
+
+    .btn-next-month {
+        width: 100%;
+        padding: 12px 18px;
     }
 
     .net-worth-amount {
@@ -437,6 +528,7 @@ body {
 
 .form-group {
     margin-bottom: 16px;
+    min-width: 0;
 }
 
 .form-group label {
@@ -445,10 +537,14 @@ body {
     font-weight: 600;
     color: #a8d8ea;
     font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .form-control {
     width: 100%;
+    min-width: 0;
     padding: 10px 12px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -457,6 +553,7 @@ body {
     font-size: 14px;
     font-family: inherit;
     transition: border-color 0.2s ease, background 0.2s ease;
+    box-sizing: border-box;
 }
 
 .form-control:focus {
@@ -519,14 +616,250 @@ body {
 }
 
 /* ===================================
+   Financial Dashboard
+   =================================== */
+
+.financial-summary {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px 20px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.pie-chart-section {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pie-chart-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    max-height: 350px;
+    overflow: hidden;
+}
+
+.bottom-section {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 20px;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 15px;
+    gap: 16px;
+    min-width: 0;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row.total {
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.summary-label {
+    color: #a8d8ea;
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.summary-value {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.summary-value.positive {
+    color: #4ade80;
+}
+
+.summary-value.negative {
+    color: #f87171;
+}
+
+.finance-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.breakdown-section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 14px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.breakdown-section h3 {
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: #a8d8ea;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    gap: 12px;
+    min-width: 0;
+}
+
+.breakdown-label {
+    color: #d4e8f0;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.breakdown-value {
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.breakdown-value.positive {
+    color: #4ade80;
+}
+
+.breakdown-value.negative {
+    color: #f87171;
+}
+
+.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.balance-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.balance-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(74, 222, 128, 0.5);
+}
+
+.balance-card-label {
+    color: #a8d8ea;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.balance-card-value {
+    color: #4ade80;
+    font-size: 20px;
+    font-weight: 700;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ===================================
    Asset Transfer Form
    =================================== */
 
 .asset-transfer-form {
     background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
+    padding: 16px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.asset-transfer-form h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #a8d8ea;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transfer-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    min-width: 0;
+}
+
+.transfer-inputs > * {
+    min-width: 0;
+}
+
+.transfer-inputs-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr auto;
+    gap: 12px;
+    align-items: end;
+    min-width: 0;
+}
+
+.transfer-inputs-compact > * {
+    min-width: 0;
 }
 
 .transfer-message,
@@ -555,13 +888,58 @@ body {
 }
 
 .current-balances {
-    margin-top: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .current-balances h3 {
     font-size: 16px;
     margin-bottom: 12px;
     color: #a8d8ea;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.balance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.balance-item-horizontal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 12px;
+    min-width: 0;
+}
+
+.balance-item-horizontal:last-child {
+    border-bottom: none;
+}
+
+.balance-item-horizontal .balance-label {
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.balance-item-horizontal .balance-value {
+    flex-shrink: 0;
+    white-space: nowrap;
+    text-align: right;
 }
 
 #assetBalances,
@@ -695,6 +1073,53 @@ body {
    Responsive Updates
    =================================== */
 
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pie-chart-container {
+        max-height: 300px;
+    }
+
+    .bottom-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-fullscreen {
+        max-width: 98vw;
+        width: 98vw;
+        max-height: 95vh;
+        height: 95vh;
+    }
+
+    .finance-breakdown {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-inputs button {
+        width: 100%;
+    }
+
+    .transfer-inputs-compact {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-inputs-compact button {
+        width: 100%;
+    }
+
+    .balance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 640px) {
     .modal-large {
         max-width: 95%;
@@ -715,5 +1140,17 @@ body {
 
     .trading-buttons button {
         width: 100%;
+    }
+
+    .summary-row {
+        font-size: 14px;
+    }
+
+    .summary-row.total {
+        font-size: 16px;
+    }
+
+    .breakdown-item {
+        font-size: 13px;
     }
 }

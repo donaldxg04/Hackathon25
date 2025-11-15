@@ -32,10 +32,11 @@ const InvestingModal = ({ onClose }) => {
       return;
     }
 
-    if (gameState.markets.cash < cost) {
-      setMessage({ 
-        text: `Insufficient cash. Need ${formatCurrency(cost)}, have ${formatCurrency(gameState.markets.cash)}.`, 
-        type: 'error' 
+    const availableCash = gameState.finance.assetAllocation.investments;
+    if (availableCash < cost) {
+      setMessage({
+        text: `Insufficient cash. Need ${formatCurrency(cost)}, have ${formatCurrency(availableCash)}.`,
+        type: 'error'
       });
       return;
     }
@@ -92,7 +93,7 @@ const InvestingModal = ({ onClose }) => {
             </div>
             <div className="cash-balance">
               <span>Available Cash:</span>
-              <span className="value-highlight">{formatCurrency(gameState.markets.cash)}</span>
+              <span className="value-highlight">{formatCurrency(gameState.finance.assetAllocation.investments)}</span>
             </div>
           </div>
 
