@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 
-const YourNewModal = ({ onClose }) => {
+const DecisionModal = ({ onClose }) => {
   const { gameState } = useGame();
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
 
 
+
 const Dashboard = () => {
   const { gameState } = useGame();
   const [activeModal, setActiveModal] = useState(null);
