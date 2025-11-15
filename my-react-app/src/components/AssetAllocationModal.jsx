@@ -14,15 +14,13 @@ const ASSET_LABELS = {
   realEstate: 'Real Estate',
   checking: 'Checking Account',
   investments: 'Investments',
-  crypto: 'Crypto',
-  other: 'Other Assets'
+  emergencyFund: 'Emergency Fund'
 };
 
 const ASSET_COLORS = {
   checking: '#22c55e',
   investments: '#f59e0b',
-  crypto: '#ec4899',
-  other: '#8b5cf6',
+  emergencyFund: '#8b5cf6',
   realEstate: '#3b82f6'
 };
 
@@ -98,12 +96,13 @@ const AssetAllocationModal = ({ onClose }) => {
   const netCashFlow = totalIncome - totalExpenses;
   const assetLabels = getAssetLabels();
 
-  // Prepare pie chart data
+  // Prepare pie chart data (only positive values)
   const assetAllocation = gameState.finance.assetAllocation;
   const chartLabels = [];
   const chartData = [];
   const chartColors = [];
 
+  // Only include positive values in the pie chart
   Object.entries(assetAllocation).forEach(([key, value]) => {
     if (value > 0) {
       chartLabels.push(assetLabels[key]);
@@ -234,7 +233,9 @@ const AssetAllocationModal = ({ onClose }) => {
                 {Object.entries(gameState.finance.assetAllocation).map(([key, value]) => (
                   <div key={key} className="balance-item-horizontal">
                     <span className="balance-label">{assetLabels[key]}:</span>
-                    <span className="balance-value">{formatCurrency(value)}</span>
+                    <span className={`balance-value ${value < 0 ? 'negative' : 'positive'}`}>
+                      {formatCurrency(value)}
+                    </span>
                   </div>
                 ))}
               </div>

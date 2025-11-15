@@ -4,22 +4,23 @@ const ASSET_LABELS = {
   realEstate: 'Real Estate',
   checking: 'Checking Account',
   investments: 'Investments',
-  crypto: 'Crypto',
-  other: 'Other Assets'
+  emergencyFund: 'Emergency Fund'
 };
 
 const ASSET_COLORS = {
   realEstate: '#3b82f6',
   checking: '#22c55e',
   investments: '#f59e0b',
-  crypto: '#ec4899',
-  other: '#8b5cf6'
+  emergencyFund: '#8b5cf6'
 };
 
 const AssetAllocationCard = ({ onClick }) => {
   const { gameState } = useGame();
   const allocation = gameState.finance.assetAllocation;
-  const total = Object.values(allocation).reduce((sum, val) => sum + val, 0);
+
+  // Only count positive values for the pie chart
+  const positiveValues = Object.values(allocation).filter(val => val > 0);
+  const total = positiveValues.reduce((sum, val) => sum + val, 0);
 
   const segments = [];
   for (const key in allocation) {

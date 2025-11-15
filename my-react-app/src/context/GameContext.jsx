@@ -48,8 +48,7 @@ export const GameProvider = ({ children }) => {
       assetAllocation: {
         checking: 50000,
         investments: 0,
-        crypto: 0,
-        other: 0
+        emergencyFund: 0
       }
     },
     markets: {
@@ -284,14 +283,36 @@ export const GameProvider = ({ children }) => {
         }
       }
 
-      // Calculate net cash flow
-      const netCashFlow = totalIncome - totalExpenses;
+      // Process checking account: income first, then expenses
+      let newChecking = prev.finance.assetAllocation.checking;
 
-      // Update checking account
-      const newChecking = prev.finance.assetAllocation.checking + netCashFlow;
+      // Add income to checking
+      newChecking += totalIncome;
+
+      // Subtract expenses from checking
+      newChecking -= totalExpenses;
+
+      // Apply overdraft fee if checking went negative
+      const OVERDRAFT_FEE = 35;
+      let overdraftFeeApplied = false;
+      if (newChecking < 0 && prev.finance.assetAllocation.checking >= 0) {
+        // Just went into overdraft this month
+        newChecking -= OVERDRAFT_FEE;
+        overdraftFeeApplied = true;
+      } else if (newChecking < 0 && prev.finance.assetAllocation.checking < 0) {
+        // Already in overdraft, apply fee again
+        newChecking -= OVERDRAFT_FEE;
+        overdraftFeeApplied = true;
+      }
+
+      // Apply 2% monthly interest to emergency fund
+      const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
+      const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
+
       const newAllocation = {
         ...prev.finance.assetAllocation,
-        checking: newChecking
+        checking: newChecking,
+        emergencyFund: prev.finance.assetAllocation.emergencyFund + emergencyFundInterest
       };
 
       // Update stock prices with some random variation (-5% to +5%)
