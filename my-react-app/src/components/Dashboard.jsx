@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import NetWorthCard from './NetWorthCard';
 import AssetAllocationCard from './AssetAllocationCard';

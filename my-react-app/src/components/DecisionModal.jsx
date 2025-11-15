@@ -30,4 +30,4 @@ const YourNewModal = ({ onClose }) => {
   );
 };
 
-export default YourNewModal;
+export default DecisionModal;
