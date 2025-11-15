@@ -13,32 +13,36 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #a8d8ea 0%, #d4e8f0 100%);
     min-height: 100vh;
-    padding: 20px;
+    height: 100vh;
+    padding: 15px;
     color: #2a2a2a;
+    overflow: hidden;
 }
 
 /* Dashboard Layout */
 .dashboard-container {
     max-width: 1400px;
+    height: 100%;
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 20px;
+    gap: 15px;
+    padding: 0;
 }
 
 .left-column,
 .right-column {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+    height: 100%;
 }
 
 /* Card Styles */
 .card {
     background: rgba(42, 42, 42, 0.95);
     border-radius: 16px;
-    padding: 24px;
+    padding: 18px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     color: #fff;
@@ -51,30 +55,30 @@ body {
 }
 
 .card h3 {
-    margin-bottom: 16px;
-    font-size: 18px;
+    margin-bottom: 10px;
+    font-size: 16px;
     font-weight: 600;
 }
 
 /* Net Worth Card */
 .net-worth-card {
-    min-height: 300px;
+    min-height: 240px;
     display: flex;
     flex-direction: column;
 }
 
 .net-worth-amount {
     color: #4ade80;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     text-align: center;
 }
 
 .chart-container {
     flex: 1;
     position: relative;
-    min-height: 200px;
+    min-height: 160px;
 }
 
 #netWorthChart {
@@ -82,11 +86,30 @@ body {
     height: 100% !important;
 }
 
-/* Life Balance Card */
-.life-balance-card {
-    min-height: 300px;
+/* Asset Allocation Card */
+.asset-allocation-card {
+    min-height: 240px;
     display: flex;
     flex-direction: column;
+}
+
+/* Market Watch Card */
+.market-watch-card {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+}
+
+.market-chart-container {
+    flex: 1;
+    position: relative;
+    min-height: 100px;
+    margin-top: 8px;
+}
+
+#marketChart {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .circular-chart-container {
@@ -94,27 +117,27 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
 }
 
 .circular-chart {
     width: 100%;
-    max-width: 200px;
+    max-width: 160px;
     height: auto;
 }
 
 .chart-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
     justify-content: center;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 4px;
+    font-size: 11px;
 }
 
 .legend-color {
@@ -125,11 +148,11 @@ body {
 
 /* Date Display */
 .date-display {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     color: #2a2a2a;
     text-align: right;
-    padding: 12px 0;
+    padding: 8px 0;
     text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
 }
 
@@ -139,14 +162,15 @@ body {
 }
 
 .player-info {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 6px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 14px;
 }
 
 .info-label {
@@ -160,18 +184,18 @@ body {
 
 /* Stat Bars */
 .stats-container {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .stat-bar {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .stat-label {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 14px;
+    margin-bottom: 4px;
+    font-size: 12px;
     font-weight: 500;
 }
 
@@ -181,9 +205,9 @@ body {
 
 .bar-background {
     width: 100%;
-    height: 24px;
+    height: 18px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 9px;
     overflow: hidden;
 }
 
@@ -212,17 +236,18 @@ body {
 /* Test Controls */
 .test-controls {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
+    margin-top: 8px;
 }
 
 .btn-primary {
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -238,20 +263,6 @@ body {
     transform: translateY(0);
 }
 
-/* Finance Charts Card */
-.finance-charts-card {
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.placeholder-content {
-    font-size: 20px;
-    font-weight: 600;
-    color: #a8d8ea;
-    text-align: center;
-}
 
 /* Modal System */
 .modal {
@@ -418,4 +429,291 @@ body {
 
 .stat-changing {
     animation: statPulse 0.5s ease-in-out;
+}
+
+/* ===================================
+   Form Elements
+   =================================== */
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #a8d8ea;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.form-control option {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+/* ===================================
+   Additional Button Styles
+   =================================== */
+
+.btn-success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-success:active {
+    transform: translateY(0);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
+/* ===================================
+   Asset Transfer Form
+   =================================== */
+
+.asset-transfer-form {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.transfer-message,
+.trading-message {
+    padding: 12px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-size: 14px;
+    display: none;
+}
+
+.transfer-message.success,
+.trading-message.success {
+    display: block;
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid #22c55e;
+    color: #4ade80;
+}
+
+.transfer-message.error,
+.trading-message.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #ef4444;
+    color: #f87171;
+}
+
+.current-balances {
+    margin-top: 24px;
+}
+
+.current-balances h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #a8d8ea;
+}
+
+#assetBalances,
+#netWorthBreakdown {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 8px;
+}
+
+#assetBalances .balance-item,
+#netWorthBreakdown .balance-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#assetBalances .balance-item:last-child,
+#netWorthBreakdown .balance-item:last-child {
+    border-bottom: none;
+}
+
+.balance-label {
+    color: #a8d8ea;
+    font-weight: 500;
+}
+
+.balance-value {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+/* ===================================
+   Investing Modal Styles
+   =================================== */
+
+.modal-large {
+    max-width: 800px;
+}
+
+.portfolio-summary {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.portfolio-summary h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #a8d8ea;
+}
+
+.portfolio-value,
+.cash-balance {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 16px;
+}
+
+.value-highlight {
+    color: #4ade80;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.positions-table-container {
+    margin-bottom: 24px;
+}
+
+.positions-table-container h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #a8d8ea;
+}
+
+.positions-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.positions-table th {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #a8d8ea;
+    font-size: 14px;
+}
+
+.positions-table td {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 14px;
+}
+
+.positions-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.trading-interface {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.trading-interface h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #a8d8ea;
+}
+
+.trading-form {
+    margin-bottom: 16px;
+}
+
+.trading-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.trading-buttons button {
+    flex: 1;
+}
+
+/* ===================================
+   Responsive Updates
+   =================================== */
+
+@media (max-width: 640px) {
+    .modal-large {
+        max-width: 95%;
+    }
+
+    .positions-table {
+        font-size: 12px;
+    }
+
+    .positions-table th,
+    .positions-table td {
+        padding: 8px;
+    }
+
+    .trading-buttons {
+        flex-direction: column;
+    }
+
+    .trading-buttons button {
+        width: 100%;
+    }
 }

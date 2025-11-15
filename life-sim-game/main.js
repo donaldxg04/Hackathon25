@@ -40,13 +40,68 @@
                 { month: 'Mar', value: 1530000 },
                 { month: 'Apr', value: 1545000 },
                 { month: 'May', value: 1568960.98 }
-            ]
+            ],
+            // Asset allocation breakdown
+            assetAllocation: {
+                realEstate: 500000,
+                checking: 25000,
+                investments: 750000,
+                crypto: 10000,
+                other: 50000
+            }
         },
-        lifeBalance: {
-            work: 65,
-            social: 45,
-            growth: 70,
-            recreation: 55
+        // Market data for stocks
+        markets: {
+            cash: 25000, // Available cash for trading (tied to checking)
+            positions: [
+                { symbol: 'ACME', shares: 50, price: 120 },
+                { symbol: 'TECH', shares: 10, price: 300 },
+                { symbol: 'CRYPTO_ETF', shares: 5, price: 800 }
+            ],
+            priceHistory: {
+                ACME: [
+                    { month: 'Jun', value: 95 },
+                    { month: 'Jul', value: 98 },
+                    { month: 'Aug', value: 102 },
+                    { month: 'Sep', value: 105 },
+                    { month: 'Oct', value: 110 },
+                    { month: 'Nov', value: 112 },
+                    { month: 'Dec', value: 115 },
+                    { month: 'Jan', value: 118 },
+                    { month: 'Feb', value: 116 },
+                    { month: 'Mar', value: 119 },
+                    { month: 'Apr', value: 121 },
+                    { month: 'May', value: 120 }
+                ],
+                TECH: [
+                    { month: 'Jun', value: 250 },
+                    { month: 'Jul', value: 260 },
+                    { month: 'Aug', value: 270 },
+                    { month: 'Sep', value: 265 },
+                    { month: 'Oct', value: 275 },
+                    { month: 'Nov', value: 280 },
+                    { month: 'Dec', value: 285 },
+                    { month: 'Jan', value: 290 },
+                    { month: 'Feb', value: 295 },
+                    { month: 'Mar', value: 292 },
+                    { month: 'Apr', value: 298 },
+                    { month: 'May', value: 300 }
+                ],
+                CRYPTO_ETF: [
+                    { month: 'Jun', value: 600 },
+                    { month: 'Jul', value: 650 },
+                    { month: 'Aug', value: 700 },
+                    { month: 'Sep', value: 680 },
+                    { month: 'Oct', value: 720 },
+                    { month: 'Nov', value: 750 },
+                    { month: 'Dec', value: 780 },
+                    { month: 'Jan', value: 790 },
+                    { month: 'Feb', value: 775 },
+                    { month: 'Mar', value: 785 },
+                    { month: 'Apr', value: 795 },
+                    { month: 'May', value: 800 }
+                ]
+            }
         }
     };
 
@@ -55,6 +110,8 @@
     // TODO: Implement daily tick / time progression system
     // TODO: Connect events system to modify stats and finances
     // TODO: Add more screens (career, relationships, assets, etc.)
+    // TODO: Add transaction history / logs
+    // TODO: Hook real market data source here
 
     // ===================================
     // DOM References
@@ -78,16 +135,36 @@
 
         // Interactive cards
         netWorthCard: document.getElementById('netWorthCard'),
-        lifeBalanceCard: document.getElementById('lifeBalanceCard'),
-        financeChartsCard: document.getElementById('financeChartsCard'),
+        assetAllocationCard: document.getElementById('assetAllocationCard'),
+        marketWatchCard: document.getElementById('marketWatchCard'),
 
         // Test controls
         randomEventBtn: document.getElementById('randomEventBtn'),
 
         // Charts
         netWorthChartCanvas: document.getElementById('netWorthChart'),
+        marketChartCanvas: document.getElementById('marketChart'),
         pieSegments: document.getElementById('pieSegments'),
-        chartLegend: document.getElementById('chartLegend')
+        chartLegend: document.getElementById('chartLegend'),
+
+        // Asset allocation modal elements
+        fromAccount: document.getElementById('fromAccount'),
+        toAccount: document.getElementById('toAccount'),
+        transferAmount: document.getElementById('transferAmount'),
+        transferBtn: document.getElementById('transferBtn'),
+        transferMessage: document.getElementById('transferMessage'),
+        assetBalances: document.getElementById('assetBalances'),
+        netWorthBreakdown: document.getElementById('netWorthBreakdown'),
+
+        // Investing modal elements
+        portfolioValue: document.getElementById('portfolioValue'),
+        availableCash: document.getElementById('availableCash'),
+        positionsTableBody: document.getElementById('positionsTableBody'),
+        stockSymbol: document.getElementById('stockSymbol'),
+        shareAmount: document.getElementById('shareAmount'),
+        buyBtn: document.getElementById('buyBtn'),
+        sellBtn: document.getElementById('sellBtn'),
+        tradingMessage: document.getElementById('tradingMessage')
     };
 
     // ===================================
@@ -103,24 +180,56 @@
         DOM.playerOccupation.textContent = gameState.player.occupation;
         DOM.playerLocation.textContent = gameState.player.location;
 
-        // Update net worth display
-        updateNetWorthDisplay();
+        // Sync markets cash with checking account
+        gameState.markets.cash = gameState.finance.assetAllocation.checking;
 
-        // Update stat bars
+        // Calculate net worth from all sources
+        recalculateNetWorth();
+
+        // Update displays
+        updateNetWorthDisplay();
         updateStatsUI();
 
         // Initialize charts
         initNetWorthChart();
-        initLifeBalanceChart();
+        initAssetAllocationChart();
+        initMarketCharts();
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
     }
 
     function updateNetWorthDisplay() {
-        const formatted = new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(gameState.finance.netWorth);
+        DOM.netWorthDisplay.textContent = `Net Worth: ${formatCurrency(gameState.finance.netWorth)}`;
+    }
 
-        DOM.netWorthDisplay.textContent = `Net Worth: ${formatted}`;
+    // ===================================
+    // Net Worth Calculation
+    // ===================================
+    function recalculateNetWorth() {
+        // Sum all assets
+        let total = 0;
+
+        // Add asset allocation categories
+        for (const key in gameState.finance.assetAllocation) {
+            total += gameState.finance.assetAllocation[key];
+        }
+
+        // Add market positions at current prices
+        gameState.markets.positions.forEach(position => {
+            total += position.shares * position.price;
+        });
+
+        gameState.finance.netWorth = total;
+
+        // Update net worth history (replace the last entry with current)
+        if (gameState.finance.netWorthHistory.length > 0) {
+            gameState.finance.netWorthHistory[gameState.finance.netWorthHistory.length - 1].value = total;
+        }
     }
 
     // ===================================
@@ -225,11 +334,7 @@
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return new Intl.NumberFormat('en-US', {
-                                    style: 'currency',
-                                    currency: 'USD',
-                                    minimumFractionDigits: 0
-                                }).format(context.parsed.y);
+                                return formatCurrency(context.parsed.y);
                             }
                         }
                     }
@@ -267,21 +372,67 @@
         });
     }
 
+    function updateNetWorthChart() {
+        if (netWorthChart) {
+            netWorthChart.data.datasets[0].data = gameState.finance.netWorthHistory.map(item => item.value);
+            netWorthChart.update();
+        }
+    }
+
     // ===================================
-    // Life Balance Circular Chart
+    // Asset Allocation UI and Transfers
     // ===================================
-    function initLifeBalanceChart() {
-        const segments = [
-            { label: 'Work', value: gameState.lifeBalance.work, color: '#3b82f6' },
-            { label: 'Social', value: gameState.lifeBalance.social, color: '#f59e0b' },
-            { label: 'Growth', value: gameState.lifeBalance.growth, color: '#22c55e' },
-            { label: 'Recreation', value: gameState.lifeBalance.recreation, color: '#ec4899' }
-        ];
+    const ASSET_LABELS = {
+        realEstate: 'Real Estate',
+        checking: 'Checking Account',
+        investments: 'Investments',
+        crypto: 'Crypto',
+        other: 'Other Assets'
+    };
+
+    const ASSET_COLORS = {
+        realEstate: '#3b82f6',
+        checking: '#22c55e',
+        investments: '#f59e0b',
+        crypto: '#ec4899',
+        other: '#8b5cf6'
+    };
+
+    function initAssetAllocationChart() {
+        updateAssetAllocationUI();
+    }
+
+    function updateAssetAllocationUI() {
+        const allocation = gameState.finance.assetAllocation;
+        const total = Object.values(allocation).reduce((sum, val) => sum + val, 0);
+
+        // Create segments for pie chart
+        const segments = [];
+        for (const key in allocation) {
+            if (allocation[key] > 0) {
+                segments.push({
+                    label: ASSET_LABELS[key],
+                    value: allocation[key],
+                    percentage: (allocation[key] / total) * 100,
+                    color: ASSET_COLORS[key]
+                });
+            }
+        }
+
+        // Draw pie chart
+        drawPieChart(segments);
+
+        // Update balances in modal
+        updateAssetBalancesDisplay();
+    }
+
+    function drawPieChart(segments) {
+        if (!DOM.pieSegments || !DOM.chartLegend) return;
 
         const total = segments.reduce((sum, seg) => sum + seg.value, 0);
         let currentAngle = -90; // Start at top
 
-        // Clear existing segments
+        // Clear existing
         DOM.pieSegments.innerHTML = '';
         DOM.chartLegend.innerHTML = '';
 
@@ -289,7 +440,7 @@
             const percentage = segment.value / total;
             const angle = percentage * 360;
 
-            // Create pie slice using path
+            // Create pie slice
             const startAngle = currentAngle;
             const endAngle = currentAngle + angle;
 
@@ -318,17 +469,320 @@
 
             DOM.pieSegments.appendChild(path);
 
-            // Create legend item
+            // Create legend
             const legendItem = document.createElement('div');
             legendItem.className = 'legend-item';
             legendItem.innerHTML = `
                 <div class="legend-color" style="background: ${segment.color}"></div>
-                <span>${segment.label} (${segment.value}%)</span>
+                <span>${segment.label}: ${segment.percentage.toFixed(1)}%</span>
             `;
             DOM.chartLegend.appendChild(legendItem);
 
             currentAngle = endAngle;
         });
+    }
+
+    function updateAssetBalancesDisplay() {
+        if (!DOM.assetBalances) return;
+
+        DOM.assetBalances.innerHTML = '';
+
+        for (const key in gameState.finance.assetAllocation) {
+            const item = document.createElement('div');
+            item.className = 'balance-item';
+            item.innerHTML = `
+                <span class="balance-label">${ASSET_LABELS[key]}:</span>
+                <span class="balance-value">${formatCurrency(gameState.finance.assetAllocation[key])}</span>
+            `;
+            DOM.assetBalances.appendChild(item);
+        }
+    }
+
+    function updateNetWorthBreakdown() {
+        if (!DOM.netWorthBreakdown) return;
+
+        DOM.netWorthBreakdown.innerHTML = '';
+
+        // Add asset allocation
+        for (const key in gameState.finance.assetAllocation) {
+            const item = document.createElement('div');
+            item.className = 'balance-item';
+            item.innerHTML = `
+                <span class="balance-label">${ASSET_LABELS[key]}:</span>
+                <span class="balance-value">${formatCurrency(gameState.finance.assetAllocation[key])}</span>
+            `;
+            DOM.netWorthBreakdown.appendChild(item);
+        }
+
+        // Add market positions
+        const marketValue = gameState.markets.positions.reduce((sum, pos) => sum + (pos.shares * pos.price), 0);
+        if (marketValue > 0) {
+            const item = document.createElement('div');
+            item.className = 'balance-item';
+            item.innerHTML = `
+                <span class="balance-label">Stock Portfolio:</span>
+                <span class="balance-value">${formatCurrency(marketValue)}</span>
+            `;
+            DOM.netWorthBreakdown.appendChild(item);
+        }
+
+        // Add total
+        const totalItem = document.createElement('div');
+        totalItem.className = 'balance-item';
+        totalItem.style.borderTop = '2px solid rgba(74, 222, 128, 0.3)';
+        totalItem.style.marginTop = '8px';
+        totalItem.style.paddingTop = '8px';
+        totalItem.innerHTML = `
+            <span class="balance-label" style="font-weight: 700;">Total Net Worth:</span>
+            <span class="balance-value" style="font-size: 18px;">${formatCurrency(gameState.finance.netWorth)}</span>
+        `;
+        DOM.netWorthBreakdown.appendChild(totalItem);
+    }
+
+    function transferFunds(fromKey, toKey, amount) {
+        // Validate
+        if (!gameState.finance.assetAllocation.hasOwnProperty(fromKey)) {
+            return { success: false, message: 'Invalid source account.' };
+        }
+        if (!gameState.finance.assetAllocation.hasOwnProperty(toKey)) {
+            return { success: false, message: 'Invalid destination account.' };
+        }
+        if (fromKey === toKey) {
+            return { success: false, message: 'Source and destination must be different.' };
+        }
+        if (amount <= 0) {
+            return { success: false, message: 'Amount must be greater than zero.' };
+        }
+        if (gameState.finance.assetAllocation[fromKey] < amount) {
+            return { success: false, message: 'Insufficient funds in source account.' };
+        }
+
+        // Perform transfer
+        gameState.finance.assetAllocation[fromKey] -= amount;
+        gameState.finance.assetAllocation[toKey] += amount;
+
+        // Sync checking with markets cash
+        gameState.markets.cash = gameState.finance.assetAllocation.checking;
+
+        // Recalculate net worth
+        recalculateNetWorth();
+
+        return {
+            success: true,
+            message: `Transferred ${formatCurrency(amount)} from ${ASSET_LABELS[fromKey]} to ${ASSET_LABELS[toKey]}.`
+        };
+    }
+
+    // ===================================
+    // Market Charts and Investing Menu
+    // ===================================
+    let marketChart = null;
+
+    function initMarketCharts() {
+        if (!DOM.marketChartCanvas || !window.Chart) {
+            console.warn('Chart.js not loaded or market chart canvas not found');
+            return;
+        }
+
+        const ctx = DOM.marketChartCanvas.getContext('2d');
+
+        const datasets = [];
+        const colors = ['#3b82f6', '#22c55e', '#ec4899'];
+        let i = 0;
+
+        for (const symbol in gameState.markets.priceHistory) {
+            datasets.push({
+                label: symbol,
+                data: gameState.markets.priceHistory[symbol].map(item => item.value),
+                borderColor: colors[i % colors.length],
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2
+            });
+            i++;
+        }
+
+        marketChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: gameState.markets.priceHistory['ACME'].map(item => item.month),
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#a8d8ea',
+                            font: {
+                                size: 11
+                            },
+                            boxWidth: 12,
+                            padding: 8
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(42, 42, 42, 0.95)',
+                        titleColor: '#4ade80',
+                        bodyColor: '#fff',
+                        borderColor: '#4ade80',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#a8d8ea',
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#a8d8ea',
+                            font: {
+                                size: 10
+                            },
+                            callback: function(value) {
+                                return '$' + value.toFixed(0);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateMarketCharts() {
+        if (marketChart) {
+            marketChart.update();
+        }
+    }
+
+    function getStockPrice(symbol) {
+        const position = gameState.markets.positions.find(p => p.symbol === symbol);
+        return position ? position.price : 0;
+    }
+
+    function updatePortfolioDisplay() {
+        if (!DOM.positionsTableBody) return;
+
+        // Clear table
+        DOM.positionsTableBody.innerHTML = '';
+
+        let totalValue = 0;
+
+        // Add rows for each position
+        gameState.markets.positions.forEach(position => {
+            const value = position.shares * position.price;
+            totalValue += value;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${position.symbol}</td>
+                <td>${position.shares}</td>
+                <td>${formatCurrency(position.price)}</td>
+                <td>${formatCurrency(value)}</td>
+            `;
+            DOM.positionsTableBody.appendChild(row);
+        });
+
+        // Update summary
+        if (DOM.portfolioValue) {
+            DOM.portfolioValue.textContent = formatCurrency(totalValue);
+        }
+        if (DOM.availableCash) {
+            DOM.availableCash.textContent = formatCurrency(gameState.markets.cash);
+        }
+    }
+
+    function buyStock(symbol, shares) {
+        const price = getStockPrice(symbol);
+
+        if (price === 0) {
+            return { success: false, message: 'Invalid stock symbol.' };
+        }
+
+        if (shares <= 0) {
+            return { success: false, message: 'Number of shares must be greater than zero.' };
+        }
+
+        const cost = price * shares;
+
+        if (gameState.markets.cash < cost) {
+            return { success: false, message: `Insufficient cash. Need ${formatCurrency(cost)}, have ${formatCurrency(gameState.markets.cash)}.` };
+        }
+
+        // Deduct cash
+        gameState.markets.cash -= cost;
+        gameState.finance.assetAllocation.checking = gameState.markets.cash;
+
+        // Add shares
+        const position = gameState.markets.positions.find(p => p.symbol === symbol);
+        if (position) {
+            position.shares += shares;
+        }
+
+        // Recalculate net worth
+        recalculateNetWorth();
+
+        return {
+            success: true,
+            message: `Bought ${shares} shares of ${symbol} for ${formatCurrency(cost)}.`
+        };
+    }
+
+    function sellStock(symbol, shares) {
+        const price = getStockPrice(symbol);
+
+        if (price === 0) {
+            return { success: false, message: 'Invalid stock symbol.' };
+        }
+
+        if (shares <= 0) {
+            return { success: false, message: 'Number of shares must be greater than zero.' };
+        }
+
+        const position = gameState.markets.positions.find(p => p.symbol === symbol);
+        if (!position || position.shares < shares) {
+            return { success: false, message: `Insufficient shares. You only have ${position ? position.shares : 0} shares of ${symbol}.` };
+        }
+
+        const proceeds = price * shares;
+
+        // Add cash
+        gameState.markets.cash += proceeds;
+        gameState.finance.assetAllocation.checking = gameState.markets.cash;
+
+        // Remove shares
+        position.shares -= shares;
+
+        // Recalculate net worth
+        recalculateNetWorth();
+
+        return {
+            success: true,
+            message: `Sold ${shares} shares of ${symbol} for ${formatCurrency(proceeds)}.`
+        };
     }
 
     // ===================================
@@ -339,6 +793,15 @@
         if (modal) {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            // Update modal content when opening
+            if (modalId === 'assetAllocationModal') {
+                updateAssetBalancesDisplay();
+            } else if (modalId === 'investingModal') {
+                updatePortfolioDisplay();
+            } else if (modalId === 'netWorthModal') {
+                updateNetWorthBreakdown();
+            }
         }
     }
 
@@ -396,8 +859,102 @@
         // Random Event button
         DOM.randomEventBtn.addEventListener('click', triggerRandomEvent);
 
+        // Transfer funds button
+        if (DOM.transferBtn) {
+            DOM.transferBtn.addEventListener('click', handleTransfer);
+        }
+
+        // Buy/Sell stock buttons
+        if (DOM.buyBtn) {
+            DOM.buyBtn.addEventListener('click', handleBuy);
+        }
+        if (DOM.sellBtn) {
+            DOM.sellBtn.addEventListener('click', handleSell);
+        }
+
         // Initialize modal handlers
         initModalHandlers();
+    }
+
+    function handleTransfer() {
+        const fromKey = DOM.fromAccount.value;
+        const toKey = DOM.toAccount.value;
+        const amount = parseFloat(DOM.transferAmount.value);
+
+        const result = transferFunds(fromKey, toKey, amount);
+
+        // Show message
+        DOM.transferMessage.textContent = result.message;
+        DOM.transferMessage.className = 'transfer-message ' + (result.success ? 'success' : 'error');
+
+        if (result.success) {
+            // Clear input
+            DOM.transferAmount.value = '';
+
+            // Update UI
+            updateAssetAllocationUI();
+            updateNetWorthDisplay();
+            updateNetWorthChart();
+
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                DOM.transferMessage.className = 'transfer-message';
+            }, 3000);
+        }
+    }
+
+    function handleBuy() {
+        const symbol = DOM.stockSymbol.value;
+        const shares = parseInt(DOM.shareAmount.value);
+
+        const result = buyStock(symbol, shares);
+
+        // Show message
+        DOM.tradingMessage.textContent = result.message;
+        DOM.tradingMessage.className = 'trading-message ' + (result.success ? 'success' : 'error');
+
+        if (result.success) {
+            // Clear input
+            DOM.shareAmount.value = '';
+
+            // Update UI
+            updatePortfolioDisplay();
+            updateAssetAllocationUI();
+            updateNetWorthDisplay();
+            updateNetWorthChart();
+
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                DOM.tradingMessage.className = 'trading-message';
+            }, 3000);
+        }
+    }
+
+    function handleSell() {
+        const symbol = DOM.stockSymbol.value;
+        const shares = parseInt(DOM.shareAmount.value);
+
+        const result = sellStock(symbol, shares);
+
+        // Show message
+        DOM.tradingMessage.textContent = result.message;
+        DOM.tradingMessage.className = 'trading-message ' + (result.success ? 'success' : 'error');
+
+        if (result.success) {
+            // Clear input
+            DOM.shareAmount.value = '';
+
+            // Update UI
+            updatePortfolioDisplay();
+            updateAssetAllocationUI();
+            updateNetWorthDisplay();
+            updateNetWorthChart();
+
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                DOM.tradingMessage.className = 'trading-message';
+            }, 3000);
+        }
     }
 
     // ===================================
@@ -427,5 +984,6 @@
     // Expose gameState to window for debugging (remove in production)
     window.gameState = gameState;
     window.updateStatsUI = updateStatsUI;
+    window.recalculateNetWorth = recalculateNetWorth;
 
 })();
