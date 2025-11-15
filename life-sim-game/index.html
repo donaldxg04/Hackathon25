@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Sim - Main Dashboard</title>
+    <!--
+        BitLife-style Web Game - Main Dashboard
+        This is the core game screen showing player stats, finances, and life balance.
+        Built with vanilla HTML, CSS, and JavaScript for maximum compatibility.
+    -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main Game Dashboard -->
+    <div class="dashboard-container">
+
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Net Worth Card (Interactive) -->
+            <div class="card net-worth-card" id="netWorthCard" data-modal="netWorthModal">
+                <div class="net-worth-amount" id="netWorthDisplay">
+                    Net Worth: $1,568,960.98
+                </div>
+                <div class="chart-container" id="netWorthChartContainer">
+                    <canvas id="netWorthChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Circular Life Balance Chart (Interactive) -->
+            <div class="card life-balance-card" id="lifeBalanceCard" data-modal="lifeBalanceModal">
+                <h3>Life Balance</h3>
+                <div class="circular-chart-container">
+                    <svg class="circular-chart" viewBox="0 0 200 200">
+                        <!-- Segments will be drawn by JavaScript -->
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#2a2a2a" stroke-width="2"/>
+                        <g id="pieSegments"></g>
+                    </svg>
+                    <div class="chart-legend" id="chartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Date Display -->
+            <div class="date-display" id="dateDisplay">
+                May 2nd, 2011
+            </div>
+
+            <!-- Player Info & Stats -->
+            <div class="card player-card">
+                <div class="player-info">
+                    <div class="info-row">
+                        <span class="info-label">Name:</span>
+                        <span class="info-value" id="playerName">John Doe</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Age:</span>
+                        <span class="info-value" id="playerAge">25</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Occupation:</span>
+                        <span class="info-value" id="playerOccupation">Software Developer</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value" id="playerLocation">San Francisco, CA</span>
+                    </div>
+                </div>
+
+                <!-- Stat Bars -->
+                <div class="stats-container">
+                    <div class="stat-bar">
+                        <div class="stat-label">
+                            <span>Health Bar</span>
+                            <span class="stat-value" id="healthValue">80%</span>
+                        </div>
+                        <div class="bar-background">
+                            <div class="bar-fill health-bar" id="healthBar" style="width: 80%"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar">
+                        <div class="stat-label">
+                            <span>Stress Bar</span>
+                            <span class="stat-value" id="stressValue">30%</span>
+                        </div>
+                        <div class="bar-background">
+                            <div class="bar-fill stress-bar" id="stressBar" style="width: 30%"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar">
+                        <div class="stat-label">
+                            <span>Happiness Bar</span>
+                            <span class="stat-value" id="happinessValue">65%</span>
+                        </div>
+                        <div class="bar-background">
+                            <div class="bar-fill happiness-bar" id="happinessBar" style="width: 65%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Controls -->
+                <div class="test-controls">
+                    <button class="btn-primary" id="randomEventBtn">Random Day Event</button>
+                </div>
+            </div>
+
+            <!-- Finance Charts Placeholder (Interactive) -->
+            <div class="card finance-charts-card" id="financeChartsCard" data-modal="financeChartsModal">
+                <div class="placeholder-content">
+                    Finance Charts here
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal System -->
+    <!-- Net Worth Modal -->
+    <div class="modal" id="netWorthModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Net Worth Breakdown</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>This will show detailed assets and liabilities later.</p>
+                <ul>
+                    <li>Cash: $250,000</li>
+                    <li>Investments: $800,000</li>
+                    <li>Real Estate: $600,000</li>
+                    <li>Liabilities: -$81,039.02</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Life Balance Modal -->
+    <div class="modal" id="lifeBalanceModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Life Balance Details</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Future stats and life balance metrics will go here.</p>
+                <ul>
+                    <li>Work-Life Balance: 65%</li>
+                    <li>Social Life: 45%</li>
+                    <li>Personal Growth: 70%</li>
+                    <li>Recreation: 55%</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finance Charts Modal -->
+    <div class="modal" id="financeChartsModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detailed Finance Charts</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Future graphs and financial history will be displayed here.</p>
+                <ul>
+                    <li>Income trends over time</li>
+                    <li>Expense breakdown</li>
+                    <li>Investment performance</li>
+                    <li>Savings rate</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js for line chart (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
