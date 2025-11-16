@@ -53,12 +53,12 @@ const Dashboard = () => {
     // Check if an event should trigger on this date
     const { shouldTrigger, event, eventKey } = shouldTriggerEvent(currentDate, shownEventKeys);
 
-    // Show modal if we have a new event and no modal is currently open
-    if (shouldTrigger && event && activeModal === null) {
+    // Show event modal even if other modals are open (events take priority)
+    if (shouldTrigger && event && activeModal !== 'decision') {
       // Pause the game when decision modal opens
       setGameSpeed(0);
       setCurrentEvent(event);
-      openModal('decision');
+      openModal('decision'); // This will close any other open modal and show the event
       setShownEventKeys(prev => new Set([...prev, eventKey]));
     }
   }, [gameState.currentDate, shownEventKeys, activeModal, setGameSpeed]);
