@@ -925,11 +925,18 @@ body {
 }
 
 .balance-card-value {
-    color: #4ade80;
     font-size: 20px;
     font-weight: 700;
     word-wrap: break-word;
     overflow-wrap: break-word;
+}
+
+.balance-card-value.positive {
+    color: #4ade80;
+}
+
+.balance-card-value.negative {
+    color: #f87171;
 }
 
 /* ===================================
@@ -1057,6 +1064,15 @@ body {
     flex-shrink: 0;
     white-space: nowrap;
     text-align: right;
+    font-weight: 600;
+}
+
+.balance-item-horizontal .balance-value.positive {
+    color: #4ade80;
+}
+
+.balance-item-horizontal .balance-value.negative {
+    color: #f87171;
 }
 
 #assetBalances,

@@ -14,15 +14,13 @@ const ASSET_LABELS = {
   realEstate: 'Real Estate',
   checking: 'Checking Account',
   investments: 'Investments',
-  crypto: 'Crypto',
-  other: 'Other Assets'
+  emergencyFund: 'Emergency Fund'
 };
 
 const ASSET_COLORS = {
   checking: '#22c55e',
   investments: '#f59e0b',
-  crypto: '#ec4899',
-  other: '#8b5cf6',
+  emergencyFund: '#8b5cf6',
   realEstate: '#3b82f6'
 };
 
@@ -98,16 +96,29 @@ const AssetAllocationModal = ({ onClose }) => {
   const netCashFlow = totalIncome - totalExpenses;
   const assetLabels = getAssetLabels();
 
-  // Prepare pie chart data
+  // Calculate total portfolio value (all stock positions)
+  const portfolioValue = gameState.markets.positions.reduce((total, position) => {
+    return total + (position.shares * position.price);
+  }, 0);
+
+  // Prepare pie chart data (only positive values)
   const assetAllocation = gameState.finance.assetAllocation;
   const chartLabels = [];
   const chartData = [];
   const chartColors = [];
 
+  // Only include positive values in the pie chart
   Object.entries(assetAllocation).forEach(([key, value]) => {
-    if (value > 0) {
+    let displayValue = value;
+
+    // For investments, add portfolio value to the cash
+    if (key === 'investments') {
+      displayValue = value + portfolioValue;
+    }
+
+    if (displayValue > 0) {
       chartLabels.push(assetLabels[key]);
-      chartData.push(value);
+      chartData.push(displayValue);
       chartColors.push(ASSET_COLORS[key]);
     }
   });
@@ -231,12 +242,19 @@ const AssetAllocationModal = ({ onClose }) => {
             <div className="current-balances">
               <h3>Account Balances</h3>
               <div className="balance-list">
-                {Object.entries(gameState.finance.assetAllocation).map(([key, value]) => (
-                  <div key={key} className="balance-item-horizontal">
-                    <span className="balance-label">{assetLabels[key]}:</span>
-                    <span className="balance-value">{formatCurrency(value)}</span>
-                  </div>
-                ))}
+                {Object.entries(gameState.finance.assetAllocation).map(([key, value]) => {
+                  // For investments, show cash + portfolio value
+                  const displayValue = key === 'investments' ? value + portfolioValue : value;
+
+                  return (
+                    <div key={key} className="balance-item-horizontal">
+                      <span className="balance-label">{assetLabels[key]}:</span>
+                      <span className={`balance-value ${displayValue < 0 ? 'negative' : 'positive'}`}>
+                        {formatCurrency(displayValue)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

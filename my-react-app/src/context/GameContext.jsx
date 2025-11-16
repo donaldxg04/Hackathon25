@@ -10,7 +10,71 @@ export const useGame = () => {
   return context;
 };
 
+// Choice B state template for Big Tech Data Science role
+const choiceBState = {
+  currentDate: new Date(2009, 0, 1),
+  player: {
+    name: "John Doe",
+    age: 25,
+    occupation: "Data Scientist",
+    location: "Mountain View, CA",
+    housingStatus: "renting"
+  },
+  income: {
+    salary: 9000,        // Large firm DS role, monthly
+    investments: 0,
+    other: 0
+  },
+  expenses: {
+    rent: 1700,          // Mountain View 1BR in 2009
+    mortgage: 0,
+    utilities: 220,
+    food: 550,
+    transportation: 450, // Car loan + gas + maintenance
+    insurance: 120,      // Car insurance only (company covers health)
+    entertainment: 250,
+    other: 300
+  },
+  stats: {
+    health: 80,
+    stress: 25,          // Safer role lowers early stress
+    happiness: 70
+  },
+  finance: {
+    netWorth: 0,         // Starts with no money
+    netWorthHistory: [
+      { month: "Jan 2009", value: 0 }
+    ],
+    assetAllocation: {
+      checking: 0,
+      investments: 0,
+      emergencyFund: 0
+    }
+  },
+  markets: {
+    positions: [
+      { symbol: "ACME", shares: 0, price: 100 },
+      { symbol: "TECH", shares: 100, price: 250 },   // Stock grant
+      { symbol: "CRYPTO_ETF", shares: 0, price: 50 }
+    ],
+    priceHistory: {
+      ACME: [
+        { month: "Jan 2009", value: 100 }
+      ],
+      TECH: [
+        { month: "Jan 2009", value: 250 }
+      ],
+      CRYPTO_ETF: [
+        { month: "Jan 2009", value: 50 }
+      ]
+    }
+  }
+};
+
 export const GameProvider = ({ children }) => {
+  // Track whether the game has been started via the start menu
+  const [hasStarted, setHasStarted] = useState(false);
+
   const [gameState, setGameState] = useState({
     currentDate: new Date(2009, 0, 1), // January 1, 2009
     player: {
@@ -48,8 +112,7 @@ export const GameProvider = ({ children }) => {
       assetAllocation: {
         checking: 50000,
         investments: 0,
-        crypto: 0,
-        other: 0
+        emergencyFund: 0
       }
     },
     markets: {
@@ -284,14 +347,36 @@ export const GameProvider = ({ children }) => {
         }
       }
 
-      // Calculate net cash flow
-      const netCashFlow = totalIncome - totalExpenses;
+      // Process checking account: income first, then expenses
+      let newChecking = prev.finance.assetAllocation.checking;
 
-      // Update checking account
-      const newChecking = prev.finance.assetAllocation.checking + netCashFlow;
+      // Add income to checking
+      newChecking += totalIncome;
+
+      // Subtract expenses from checking
+      newChecking -= totalExpenses;
+
+      // Apply overdraft fee if checking went negative
+      const OVERDRAFT_FEE = 35;
+      let overdraftFeeApplied = false;
+      if (newChecking < 0 && prev.finance.assetAllocation.checking >= 0) {
+        // Just went into overdraft this month
+        newChecking -= OVERDRAFT_FEE;
+        overdraftFeeApplied = true;
+      } else if (newChecking < 0 && prev.finance.assetAllocation.checking < 0) {
+        // Already in overdraft, apply fee again
+        newChecking -= OVERDRAFT_FEE;
+        overdraftFeeApplied = true;
+      }
+
+      // Apply 2% monthly interest to emergency fund
+      const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
+      const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
+
       const newAllocation = {
         ...prev.finance.assetAllocation,
-        checking: newChecking
+        checking: newChecking,
+        emergencyFund: prev.finance.assetAllocation.emergencyFund + emergencyFundInterest
       };
 
       // Update stock prices with some random variation (-5% to +5%)
@@ -372,6 +457,18 @@ export const GameProvider = ({ children }) => {
     return total;
   }, [gameState.expenses, gameState.player.housingStatus]);
 
+  // Initialize game with Choice B (Big Tech Data Science role) and player name
+  const startGameWithChoiceB = useCallback((playerName) => {
+    setGameState({
+      ...choiceBState,
+      player: {
+        ...choiceBState.player,
+        name: playerName || "John Doe"
+      }
+    });
+    setHasStarted(true);
+  }, []);
+
   const value = {
     gameState,
     formatCurrency,
@@ -384,7 +481,9 @@ export const GameProvider = ({ children }) => {
     getStockPrice,
     advanceMonth,
     getTotalIncome,
-    getTotalExpenses
+    getTotalExpenses,
+    hasStarted,
+    startGameWithChoiceB
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
