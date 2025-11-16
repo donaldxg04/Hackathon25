@@ -473,7 +473,7 @@ export const GameProvider = ({ children }) => {
       
       // Log date advancement for debugging (can be removed in production)
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Day advanced: ${formatMonthYear(currentDate)} → ${formatMonthYear(newDate)}`);
+        console.log(`📅 Day advanced: ${formatDate(currentDate)} → ${formatDate(newDate)}`);
       }
 
       const dayOfMonth = newDate.getDate();
@@ -545,11 +545,12 @@ export const GameProvider = ({ children }) => {
         newPositions = prev.markets.positions.map(position => {
           const symbolData = stockData[position.symbol];
           if (symbolData) {
+            // Get price for newDate, or use most recent previous date if missing
             const newPrice = getPriceForDate(symbolData, newDate);
             if (newPrice !== null && newPrice > 0) {
               // Log price updates for debugging
               if (process.env.NODE_ENV === 'development' && position.price !== newPrice) {
-                console.log(`Price updated for ${position.symbol}: $${position.price.toFixed(2)} → $${newPrice.toFixed(2)}`);
+                console.log(`💰 ${position.symbol}: $${position.price.toFixed(2)} → $${newPrice.toFixed(2)}`);
               }
               return {
                 ...position,
@@ -557,7 +558,7 @@ export const GameProvider = ({ children }) => {
               };
             }
           }
-          // If no CSV data for this symbol/date, keep current price
+          // If no CSV data for this symbol/date, keep current price (reusing previous)
           return position;
         });
       } else {
