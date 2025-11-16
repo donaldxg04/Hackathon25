@@ -91,7 +91,9 @@ const LedgerModal = ({ onClose }) => {
                 <div key={entry.id} className={`ledger-entry ${entry.type}`}>
                   <div className="ledger-entry-header">
                     <div className="ledger-entry-icon">
-                      {entry.type === 'decision' ? '🎯' : entry.type === 'randomEvent' ? '🎲' : '📝'}
+                      <span className="ledger-type-badge">
+                        {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : 'ENTRY'}
+                      </span>
                     </div>
                     <div className="ledger-entry-title-section">
                       <h3 className="ledger-entry-title">{entry.title}</h3>

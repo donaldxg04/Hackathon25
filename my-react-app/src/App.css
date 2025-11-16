@@ -1670,11 +1670,6 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.ledger-icon {
-    font-size: 20px;
-    opacity: 0.8;
-}
-
 .ledger-card-content {
     display: flex;
     flex-direction: column;
@@ -1709,8 +1704,19 @@ body {
 }
 
 .ledger-preview-type {
-    font-size: 18px;
     flex-shrink: 0;
+}
+
+.ledger-type-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .ledger-preview-text {
@@ -1849,8 +1855,32 @@ body {
 }
 
 .ledger-entry-icon {
-    font-size: 24px;
     flex-shrink: 0;
+}
+
+.ledger-type-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: inline-block;
+}
+
+.ledger-entry.decision .ledger-type-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.ledger-entry.randomEvent .ledger-type-badge {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+    border-color: rgba(139, 92, 246, 0.4);
 }
 
 .ledger-entry-title-section {

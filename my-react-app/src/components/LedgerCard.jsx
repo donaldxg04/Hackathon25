@@ -10,7 +10,6 @@ const LedgerCard = ({ onClick }) => {
     <div className="card ledger-card" onClick={onClick}>
       <div className="card-header-with-icon">
         <h3>Game Ledger</h3>
-        <span className="ledger-icon">📋</span>
       </div>
       <div className="ledger-card-content">
         {ledgerEntries.length === 0 ? (
@@ -20,7 +19,9 @@ const LedgerCard = ({ onClick }) => {
             {recentEntries.map((entry) => (
               <div key={entry.id} className="ledger-preview-item">
                 <div className="ledger-preview-type">
-                  {entry.type === 'decision' ? '🎯' : entry.type === 'randomEvent' ? '🎲' : '📝'}
+                  <span className="ledger-type-label">
+                    {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : 'ENTRY'}
+                  </span>
                 </div>
                 <div className="ledger-preview-text">
                   <div className="ledger-preview-title">{entry.title}</div>
