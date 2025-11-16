@@ -30,9 +30,9 @@ const Dashboard = () => {
     document.body.style.overflow = '';
   };
 
-  // Auto-advance timeline based on game speed (paused when decision modal is open)
+  // Auto-advance timeline based on game speed
   useEffect(() => {
-    if (gameSpeed === 0 || activeModal === 'decision') return; // Paused or decision modal open
+    if (gameSpeed === 0) return; // Paused
 
     // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed, 100ms for 10x speed
     const interval = gameSpeed === 1 ? 1000 : gameSpeed === 5 ? 200 : gameSpeed === 10 ? 100 : 1000;
@@ -42,7 +42,7 @@ const Dashboard = () => {
     }, interval);
 
     return () => clearInterval(timer);
-  }, [gameSpeed, advanceDay, activeModal]);
+  }, [gameSpeed, advanceDay]);
 
   // Check for storyline event triggers
   useEffect(() => {
