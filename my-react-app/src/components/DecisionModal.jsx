@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 
 const DecisionModal = ({ event, onClose, onDecisionComplete }) => {
-  const { updateStats, completeStoryEvent, gameState } = useGame();
+  const { updateStats, completeStoryEvent, gameState, addLedgerEntry, formatDate } = useGame();
 
   if (!event) {
     onClose();
@@ -24,6 +24,20 @@ const DecisionModal = ({ event, onClose, onDecisionComplete }) => {
     updateStats(health, stress, happiness);
     completeStoryEvent(event.id);
     
+    // Log to ledger
+    addLedgerEntry({
+      type: 'decision',
+      title: event.title || 'Decision Made',
+      description: event.text,
+      choice: 'Accept',
+      effects: {
+        health,
+        stress,
+        happiness
+      },
+      date: formatDate(gameState.currentDate)
+    });
+    
     // Close decision modal and trigger random event
     onClose();
     if (onDecisionComplete) {
@@ -36,6 +50,20 @@ const DecisionModal = ({ event, onClose, onDecisionComplete }) => {
     const { health, stress, happiness } = event.decline;
     updateStats(health, stress, happiness);
     completeStoryEvent(event.id);
+    
+    // Log to ledger
+    addLedgerEntry({
+      type: 'decision',
+      title: event.title || 'Decision Made',
+      description: event.text,
+      choice: 'Decline',
+      effects: {
+        health,
+        stress,
+        happiness
+      },
+      date: formatDate(gameState.currentDate)
+    });
     
     // Close decision modal and trigger random event
     onClose();

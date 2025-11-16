@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 
 const RandomEventModal = ({ event, onClose }) => {
-  const { updateStats } = useGame();
+  const { updateStats, addLedgerEntry, gameState, formatDate } = useGame();
 
   if (!event) {
     onClose();
@@ -23,6 +23,21 @@ const RandomEventModal = ({ event, onClose }) => {
     // Apply the event effects
     const { health, stress, happiness } = event.effects;
     updateStats(health, stress, happiness);
+    
+    // Log to ledger
+    addLedgerEntry({
+      type: 'randomEvent',
+      title: event.title,
+      description: event.text,
+      effects: {
+        health,
+        stress,
+        happiness
+      },
+      isGood: event.id.startsWith('good_'),
+      date: formatDate(gameState.currentDate)
+    });
+    
     onClose();
   };
 

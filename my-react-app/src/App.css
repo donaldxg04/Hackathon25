@@ -1659,19 +1659,279 @@ body {
     }
 }
 
-/* Properties & Vehicles Card */
-.properties-vehicles-card {
+/* Ledger Card */
+.ledger-card {
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.properties-vehicles-card.locked {
-    opacity: 0.6;
-    cursor: not-allowed;
+.ledger-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.properties-vehicles-card.locked:hover {
+.ledger-icon {
+    font-size: 20px;
     opacity: 0.8;
+}
+
+.ledger-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ledger-empty {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.ledger-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ledger-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.ledger-preview-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ledger-preview-type {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ledger-preview-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ledger-preview-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ledger-preview-date {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.ledger-preview-more {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 8px;
+    font-style: italic;
+}
+
+.ledger-card-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    margin-top: 4px;
+}
+
+/* Ledger Modal */
+.ledger-modal {
+    max-width: 800px;
+    max-height: 90vh;
+}
+
+.ledger-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px;
+}
+
+.ledger-filter-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ledger-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.ledger-filter-btn.active {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    border-color: #22c55e;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(74, 222, 128, 0.3);
+}
+
+.ledger-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.ledger-entries::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ledger-entries::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.ledger-entries::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.ledger-entries::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.ledger-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.ledger-entry {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 4px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+.ledger-entry:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.ledger-entry.decision {
+    border-left-color: #3b82f6;
+}
+
+.ledger-entry.randomEvent {
+    border-left-color: #8b5cf6;
+}
+
+.ledger-entry-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.ledger-entry-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.ledger-entry-title-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.ledger-entry-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px 0;
+}
+
+.ledger-entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+}
+
+.ledger-entry-date {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.ledger-entry-choice {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.ledger-entry-type {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.ledger-entry-type.good {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+}
+
+.ledger-entry-type.bad {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.ledger-entry-description {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.ledger-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.effect-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.effect-badge.positive {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.effect-badge.negative {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .card-header-with-icon {

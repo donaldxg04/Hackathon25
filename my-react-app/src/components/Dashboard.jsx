@@ -9,8 +9,8 @@ import AssetAllocationModal from './AssetAllocationModal';
 import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
 import RandomEventModal from './RandomEventModal';
-import PropertiesVehiclesModal from './PropertiesVehiclesModal';
-import PropertiesVehiclesCard from './PropertiesVehiclesCard';
+import LedgerModal from './LedgerModal';
+import LedgerCard from './LedgerCard';
 import { getNextStoryEvent } from '../data/storyEvents';
 import { getRandomEvent } from '../data/randomEvents';
 
@@ -112,7 +112,7 @@ const Dashboard = () => {
       <div className="left-column">
         <NetWorthCard onClick={() => openModal('netWorth')} />
         <AssetAllocationCard onClick={() => openModal('assetAllocation')} />
-        <PropertiesVehiclesCard onClick={() => openModal('propertiesVehicles')} />
+        <LedgerCard onClick={() => openModal('ledger')} />
       </div>
 
       {/* Right Column */}
@@ -179,7 +179,7 @@ const Dashboard = () => {
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}
-      {activeModal === 'propertiesVehicles' && <PropertiesVehiclesModal onClose={closeModal} />}
+      {activeModal === 'ledger' && <LedgerModal onClose={closeModal} />}
     </div>
   );
 };
