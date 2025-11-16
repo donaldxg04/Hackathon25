@@ -72,8 +72,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (gameSpeed === 0 || activeModal === 'decision' || activeModal === 'randomEvent') return; // Paused or modals open
 
-    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed
-    const interval = gameSpeed === 1 ? 1000 : 200;
+    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed, 100ms for 10x speed
+    const interval = gameSpeed === 1 ? 1000 : gameSpeed === 5 ? 200 : gameSpeed === 10 ? 100 : 1000;
 
     const timer = setInterval(() => {
       advanceDay();
@@ -147,6 +147,14 @@ const Dashboard = () => {
               title="Fast Speed (5 days/sec)"
             >
               ⏩ 5x
+            </button>
+            <button
+              className={`btn-timeline ${gameSpeed === 10 ? 'active' : ''}`}
+              onClick={() => setGameSpeed(10)}
+              disabled={activeModal === 'decision' || activeModal === 'randomEvent'}
+              title="Very Fast Speed (10 days/sec)"
+            >
+              ⏩⏩ 10x
             </button>
           </div>
         </div>
