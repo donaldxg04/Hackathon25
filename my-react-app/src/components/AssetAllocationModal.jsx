@@ -46,8 +46,11 @@ const EXPENSE_LABELS = {
 const AssetAllocationModal = ({ onClose }) => {
   const { gameState, formatCurrency, transferFunds, getTotalIncome, getTotalExpenses, update401kSettings, updateExpense, addExpense, removeExpense } = useGame();
 
-  // Get available accounts (exclude real estate if renting)
-  const availableAccounts = Object.keys(gameState.finance.assetAllocation);
+  // Get available accounts (only show functional accounts used in the game)
+  const availableAccounts = Object.keys(gameState.finance.assetAllocation).filter(key => {
+    // Exclude real estate and any undefined accounts
+    return key !== 'realEstate' && ASSET_LABELS[key];
+  });
   const getAssetLabels = () => {
     const labels = {};
     availableAccounts.forEach(key => {
@@ -220,14 +223,19 @@ const AssetAllocationModal = ({ onClose }) => {
     return total + (position.shares * position.price);
   }, 0);
 
-  // Prepare pie chart data (only positive values)
+  // Prepare pie chart data (only positive values from active accounts)
   const assetAllocation = gameState.finance.assetAllocation;
   const chartLabels = [];
   const chartData = [];
   const chartColors = [];
 
-  // Only include positive values in the pie chart
+  // Only include positive values in the pie chart from accounts that are actively used
   Object.entries(assetAllocation).forEach(([key, value]) => {
+    // Skip real estate and undefined accounts
+    if (key === 'realEstate' || !assetLabels[key]) {
+      return;
+    }
+
     let displayValue = value;
 
     // For investments, add portfolio value to the cash
@@ -766,19 +774,25 @@ const AssetAllocationModal = ({ onClose }) => {
             <div className="current-balances">
               <h3>Account Balances</h3>
               <div className="balance-list">
-                {Object.entries(gameState.finance.assetAllocation).map(([key, value]) => {
-                  // For investments, show cash + portfolio value
-                  const displayValue = key === 'investments' ? value + portfolioValue : value;
+                {Object.entries(gameState.finance.assetAllocation)
+                  .filter(([key]) => {
+                    // Only show accounts that are actively used in the game
+                    // Exclude real estate and any undefined/unused accounts
+                    return key !== 'realEstate' && assetLabels[key];
+                  })
+                  .map(([key, value]) => {
+                    // For investments, show cash + portfolio value
+                    const displayValue = key === 'investments' ? value + portfolioValue : value;
 
-                  return (
-                    <div key={key} className="balance-item-horizontal">
-                      <span className="balance-label">{assetLabels[key]}:</span>
-                      <span className={`balance-value ${displayValue < 0 ? 'negative' : 'positive'}`}>
-                        {formatCurrency(displayValue)}
-                      </span>
-                    </div>
-                  );
-                })}
+                    return (
+                      <div key={key} className="balance-item-horizontal">
+                        <span className="balance-label">{assetLabels[key]}:</span>
+                        <span className={`balance-value ${displayValue < 0 ? 'negative' : 'positive'}`}>
+                          {formatCurrency(displayValue)}
+                        </span>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 
