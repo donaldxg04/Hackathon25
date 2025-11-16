@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 
-const DecisionModal = ({ event, onClose }) => {
-  const { updateStats, completeStoryEvent } = useGame();
+const DecisionModal = ({ event, onClose, onDecisionComplete }) => {
+  const { updateStats, completeStoryEvent, gameState } = useGame();
 
   if (!event) {
     onClose();
@@ -23,14 +23,26 @@ const DecisionModal = ({ event, onClose }) => {
     const { health, stress, happiness } = event.accept;
     updateStats(health, stress, happiness);
     completeStoryEvent(event.id);
+    
+    // Close decision modal and trigger random event
     onClose();
+    if (onDecisionComplete) {
+      // Use setTimeout to ensure stats are updated before checking
+      onDecisionComplete();
+    }
   };
 
   const handleDecline = () => {
     const { health, stress, happiness } = event.decline;
     updateStats(health, stress, happiness);
     completeStoryEvent(event.id);
+    
+    // Close decision modal and trigger random event
     onClose();
+    if (onDecisionComplete) {
+      // Use setTimeout to ensure stats are updated before checking
+      onDecisionComplete();
+    }
   };
 
   return (

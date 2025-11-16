@@ -8,9 +8,11 @@ import NetWorthModal from './NetWorthModal';
 import AssetAllocationModal from './AssetAllocationModal';
 import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
+import RandomEventModal from './RandomEventModal';
 import PropertiesVehiclesModal from './PropertiesVehiclesModal';
 import PropertiesVehiclesCard from './PropertiesVehiclesCard';
 import { getNextStoryEvent } from '../data/storyEvents';
+import { getRandomEvent } from '../data/randomEvents';
 
 
 
@@ -18,6 +20,7 @@ const Dashboard = () => {
   const { gameState, formatDate, advanceDay, gameSpeed, setGameSpeed } = useGame();
   const [activeModal, setActiveModal] = useState(null);
   const [currentStoryEvent, setCurrentStoryEvent] = useState(null);
+  const [currentRandomEvent, setCurrentRandomEvent] = useState(null);
 
   const openModal = (modalId) => {
     setActiveModal(modalId);
@@ -27,17 +30,47 @@ const Dashboard = () => {
   const closeModal = () => {
     setActiveModal(null);
     setCurrentStoryEvent(null);
+    setCurrentRandomEvent(null);
     document.body.style.overflow = '';
   };
+
+  const [decisionJustCompleted, setDecisionJustCompleted] = useState(false);
+
+  const handleDecisionComplete = () => {
+    // Mark that a decision was just completed
+    setDecisionJustCompleted(true);
+  };
+
+  // Watch for when decision modal closes and trigger random event
+  useEffect(() => {
+    if (decisionJustCompleted && activeModal !== 'decision' && activeModal !== 'randomEvent') {
+      // Decision modal has closed, now check stats for random event
+      // Use a small delay to ensure state has fully updated
+      const timer = setTimeout(() => {
+        const currentStress = gameState.stats.stress;
+        const currentHappiness = gameState.stats.happiness;
+        const randomEvent = getRandomEvent(currentStress, currentHappiness);
+        
+        if (randomEvent) {
+          setCurrentRandomEvent(randomEvent);
+          setGameSpeed(0); // Pause game for random event
+          openModal('randomEvent');
+        }
+        setDecisionJustCompleted(false);
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [decisionJustCompleted, activeModal, gameState.stats.stress, gameState.stats.happiness, setGameSpeed]);
 
   // Helper function to create a month-year string key for comparison
   const getMonthYearKey = (date) => {
     return `${date.getFullYear()}-${date.getMonth() + 1}`;
   };
 
-  // Auto-advance timeline based on game speed (paused when decision modal is open)
+  // Auto-advance timeline based on game speed (paused when decision or random event modal is open)
   useEffect(() => {
-    if (gameSpeed === 0 || activeModal === 'decision') return; // Paused or decision modal open
+    if (gameSpeed === 0 || activeModal === 'decision' || activeModal === 'randomEvent') return; // Paused or modals open
 
     // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed
     const interval = gameSpeed === 1 ? 1000 : 200;
@@ -71,7 +104,7 @@ const Dashboard = () => {
       setCurrentStoryEvent(nextEvent);
       openModal('decision');
     }
-  }, [gameState.currentDate, gameState.player?.age, gameState.storyProgress, activeModal, setGameSpeed]);
+  }, [gameState.currentDate, gameState.player?.age, gameState.storyProgress, activeModal, setGameSpeed, gameState.stats]);
 
   return (
     <div className="dashboard-container">
@@ -94,7 +127,7 @@ const Dashboard = () => {
             <button
               className={`btn-timeline ${gameSpeed === 0 ? 'active' : ''}`}
               onClick={() => setGameSpeed(0)}
-              disabled={activeModal === 'decision'}
+              disabled={activeModal === 'decision' || activeModal === 'randomEvent'}
               title="Pause"
             >
               ⏸
@@ -102,7 +135,7 @@ const Dashboard = () => {
             <button
               className={`btn-timeline ${gameSpeed === 1 ? 'active' : ''}`}
               onClick={() => setGameSpeed(1)}
-              disabled={activeModal === 'decision'}
+              disabled={activeModal === 'decision' || activeModal === 'randomEvent'}
               title="Normal Speed (1 day/sec)"
             >
               ▶ 1x
@@ -110,7 +143,7 @@ const Dashboard = () => {
             <button
               className={`btn-timeline ${gameSpeed === 5 ? 'active' : ''}`}
               onClick={() => setGameSpeed(5)}
-              disabled={activeModal === 'decision'}
+              disabled={activeModal === 'decision' || activeModal === 'randomEvent'}
               title="Fast Speed (5 days/sec)"
             >
               ⏩ 5x
@@ -125,7 +158,14 @@ const Dashboard = () => {
       {activeModal === 'decision' && currentStoryEvent && (
         <DecisionModal 
           event={currentStoryEvent} 
-          onClose={closeModal} 
+          onClose={closeModal}
+          onDecisionComplete={handleDecisionComplete}
+        />
+      )}
+      {activeModal === 'randomEvent' && currentRandomEvent && (
+        <RandomEventModal
+          event={currentRandomEvent}
+          onClose={closeModal}
         />
       )}
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}

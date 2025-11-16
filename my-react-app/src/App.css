@@ -2011,3 +2011,103 @@ body {
     margin: 8px 0;
     font-size: 14px;
 }
+
+/* Random Event Modal */
+.random-event-modal {
+    max-width: 500px;
+}
+
+.random-event-modal .modal-header.good-event {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.2) 0%, rgba(34, 197, 94, 0.2) 100%);
+    border-bottom: 2px solid #4ade80;
+}
+
+.random-event-modal .modal-header.bad-event {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+    border-bottom: 2px solid #f87171;
+}
+
+.random-event-modal .modal-header.good-event h2 {
+    color: #4ade80;
+}
+
+.random-event-modal .modal-header.bad-event h2 {
+    color: #f87171;
+}
+
+.random-event-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #e5e5e5;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid rgba(74, 222, 128, 0.5);
+}
+
+.random-event-modal .modal-header.bad-event ~ .modal-body .random-event-text {
+    border-left-color: rgba(248, 113, 113, 0.5);
+}
+
+.random-event-effects {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.effect-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.effect-label {
+    color: #a8d8ea;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.effect-value {
+    font-size: 16px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.effect-value.positive {
+    color: #4ade80;
+}
+
+.effect-value.negative {
+    color: #f87171;
+}
+
+.btn-random-event-continue {
+    width: 100%;
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    border: none;
+    border-radius: 8px;
+    color: #1a1a1a;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(74, 222, 128, 0.3);
+}
+
+.btn-random-event-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(74, 222, 128, 0.4);
+}
+
+.btn-random-event-continue:active {
+    transform: translateY(0);
+}
