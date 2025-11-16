@@ -21,7 +21,7 @@ const choiceBState = {
     housingStatus: "renting"
   },
   income: {
-    salary: 9000,        // Large firm DS role, monthly
+    salary: 4000,        // Large firm DS role, monthly
     investments: 0,
     other: 0
   },
@@ -41,7 +41,7 @@ const choiceBState = {
     happiness: 70
   },
   finance: {
-    netWorth: 0,         // Starts with no money
+    netWorth: 5000,         // Starts with small savings
     netWorthHistory: [
       { month: "Jan 2009", value: 0 }
     ],
