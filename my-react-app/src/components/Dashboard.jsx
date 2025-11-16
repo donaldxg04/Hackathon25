@@ -108,7 +108,13 @@ const Dashboard = () => {
       <div className="right-column">
         <div className="date-container">
           <div className="date-display">{formatDate(gameState.currentDate)}</div>
-          <button className="btn-next-month" onClick={advanceMonth}>Next Month →</button>
+          <button 
+            className="btn-next-month" 
+            onClick={advanceMonth}
+            disabled={activeModal === 'decision'}
+          >
+            Next Month →
+          </button>
         </div>
         <PlayerCard />
         <MarketWatchCard onClick={() => openModal('investing')} />

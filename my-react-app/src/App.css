@@ -190,13 +190,21 @@ body {
     white-space: nowrap;
 }
 
-.btn-next-month:hover {
+.btn-next-month:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
 }
 
-.btn-next-month:active {
+.btn-next-month:active:not(:disabled) {
     transform: translateY(0);
+}
+
+.btn-next-month:disabled {
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Player Card */
