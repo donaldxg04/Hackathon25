@@ -16,10 +16,23 @@ const ASSET_COLORS = {
 
 const AssetAllocationCard = ({ onClick }) => {
   const { gameState } = useGame();
+  
+  // Safety checks
+  if (!gameState?.finance?.assetAllocation || !gameState?.markets?.positions) {
+    return (
+      <div className="card asset-allocation-card" onClick={onClick}>
+        <h3>Asset Allocation</h3>
+        <div className="circular-chart-container">
+          <p>No asset data available</p>
+        </div>
+      </div>
+    );
+  }
+
   const allocation = gameState.finance.assetAllocation;
 
   // Calculate total portfolio value (all stock positions)
-  const portfolioValue = gameState.markets.positions.reduce((total, position) => {
+  const portfolioValue = (gameState.markets.positions || []).reduce((total, position) => {
     return total + (position.shares * position.price);
   }, 0);
 

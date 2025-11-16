@@ -27,9 +27,24 @@ ChartJS.register(
 const NetWorthCard = ({ onClick }) => {
   const { gameState, formatCurrency } = useGame();
 
+  // Safety check: ensure netWorthHistory exists and has data
+  if (!gameState?.finance?.netWorthHistory || gameState.finance.netWorthHistory.length === 0) {
+    return (
+      <div className="card net-worth-card" onClick={onClick}>
+        <div className="net-worth-amount">
+          Net Worth: {formatCurrency(gameState?.finance?.netWorth || 0)}
+        </div>
+        <div className="chart-container">
+          <p>No history data available</p>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate max value to determine appropriate scale
-  const maxValue = Math.max(...gameState.finance.netWorthHistory.map(item => item.value));
-  const minValue = Math.min(...gameState.finance.netWorthHistory.map(item => item.value));
+  const values = gameState.finance.netWorthHistory.map(item => item.value);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
 
   // Determine scale and formatting function
   let formatValue;

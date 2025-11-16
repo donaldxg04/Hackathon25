@@ -24,25 +24,47 @@ ChartJS.register(
 const MarketWatchCard = ({ onClick }) => {
   const { gameState } = useGame();
 
+  // Safety check: ensure priceHistory exists and has data
+  if (!gameState?.markets?.priceHistory || Object.keys(gameState.markets.priceHistory).length === 0) {
+    return (
+      <div className="card market-watch-card" onClick={onClick}>
+        <h3>Market Watch</h3>
+        <div className="market-chart-container">
+          <p>No market data available</p>
+        </div>
+      </div>
+    );
+  }
+
   const datasets = [];
   const colors = ['#3b82f6', '#22c55e', '#ec4899'];
   let i = 0;
 
   for (const symbol in gameState.markets.priceHistory) {
-    datasets.push({
-      label: symbol,
-      data: gameState.markets.priceHistory[symbol].map(item => item.value),
-      borderColor: colors[i % colors.length],
-      backgroundColor: 'transparent',
-      borderWidth: 2,
-      tension: 0.3,
-      pointRadius: 2
-    });
-    i++;
+    const history = gameState.markets.priceHistory[symbol];
+    if (history && Array.isArray(history) && history.length > 0) {
+      datasets.push({
+        label: symbol,
+        data: history.map(item => item.value),
+        borderColor: colors[i % colors.length],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 2
+      });
+      i++;
+    }
   }
 
+  // Use the first available symbol's history for labels, or fallback to ACME
+  const firstSymbol = Object.keys(gameState.markets.priceHistory)[0] || 'ACME';
+  const labelHistory = gameState.markets.priceHistory[firstSymbol];
+  const labels = labelHistory && Array.isArray(labelHistory) 
+    ? labelHistory.map(item => item.month)
+    : [];
+
   const chartData = {
-    labels: gameState.markets.priceHistory['ACME'].map(item => item.month),
+    labels: labels,
     datasets: datasets
   };
 

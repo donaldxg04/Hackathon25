@@ -95,7 +95,12 @@ const Dashboard = () => {
 
   // Check for decision modal triggers
   useEffect(() => {
+    if (!gameState?.currentDate) return; // Safety check
+    
     const currentDate = gameState.currentDate;
+    // Ensure currentDate is a valid Date object
+    if (!(currentDate instanceof Date) || isNaN(currentDate.getTime())) return;
+    
     const currentMonthYearKey = getMonthYearKey(currentDate);
     
     // Check if current month and year matches any trigger month
@@ -124,7 +129,11 @@ const Dashboard = () => {
       {/* Right Column */}
       <div className="right-column">
         <div className="date-container">
-          <div className="date-display">{formatDate(gameState.currentDate)}</div>
+          <div className="date-display">
+            {gameState?.currentDate && gameState.currentDate instanceof Date && !isNaN(gameState.currentDate.getTime())
+              ? formatDate(gameState.currentDate)
+              : 'Loading...'}
+          </div>
           <div className="timeline-controls">
             <button
               className={`btn-timeline ${gameSpeed === 0 ? 'active' : ''}`}

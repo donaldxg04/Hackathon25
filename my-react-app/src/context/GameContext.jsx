@@ -292,21 +292,44 @@ export const GameProvider = ({ children }) => {
   }, [gameState.markets.positions]);
 
   const formatDate = (date) => {
+    if (!date) return 'Invalid Date';
+    // Ensure date is a Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Invalid Date';
+    
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'];
-    return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    return `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
   };
 
   const formatMonthYear = (date) => {
+    if (!date) return 'Invalid Date';
+    // Ensure date is a Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Invalid Date';
+    
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    return `${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
   };
 
   const advanceDay = useCallback(() => {
     setGameState(prev => {
+      // Safety check: ensure currentDate exists and is valid
+      if (!prev?.currentDate) {
+        return prev; // Don't advance if date is invalid
+      }
+      
       // Create new date (next day)
-      const newDate = new Date(prev.currentDate);
+      const currentDate = prev.currentDate instanceof Date 
+        ? prev.currentDate 
+        : new Date(prev.currentDate);
+      
+      if (isNaN(currentDate.getTime())) {
+        return prev; // Don't advance if date is invalid
+      }
+      
+      const newDate = new Date(currentDate);
       newDate.setDate(newDate.getDate() + 1);
 
       const dayOfMonth = newDate.getDate();
@@ -320,6 +343,7 @@ export const GameProvider = ({ children }) => {
       let newPositions = [...prev.markets.positions];
       let newPriceHistory = { ...prev.markets.priceHistory };
       let new401kShares = prev.finance.retirement401k.shares || 0;
+      let new401kBalance = prev.finance.retirement401k.balance || 0;
 
       // Calculate 401k contribution (pre-tax, deducted from salary)
       const salary = prev.income.salary;
@@ -393,15 +417,23 @@ export const GameProvider = ({ children }) => {
         // Update 401k balance based on current value of holdings on 1st of month
         const strategy = prev.finance.retirement401k.strategy;
         const strategyPosition = newPositions.find(p => p.symbol === strategy);
-        let new401kBalance = 0;
         if (strategyPosition && new401kShares > 0) {
           new401kBalance = new401kShares * strategyPosition.price;
+        } else {
+          new401kBalance = 0;
         }
         newAllocation.retirement401k = new401kBalance;
       } else {
         // Keep same positions and price history if not 1st
         newPositions = prev.markets.positions;
         newPriceHistory = prev.markets.priceHistory;
+        
+        // Still update 401k balance based on current share count and prices
+        const strategy = prev.finance.retirement401k.strategy;
+        const strategyPosition = newPositions.find(p => p.symbol === strategy);
+        if (strategyPosition && new401kShares > 0) {
+          new401kBalance = new401kShares * strategyPosition.price;
+        }
       }
       // Calculate new net worth
       let newNetWorth = 0;
@@ -477,13 +509,16 @@ export const GameProvider = ({ children }) => {
 
   // Initialize game with Choice B (Big Tech Data Science role) and player name
   const startGameWithChoiceB = useCallback((playerName) => {
-    setGameState({
+    // Ensure Date object is properly created (not just copied)
+    const initialState = {
       ...choiceBState,
+      currentDate: new Date(choiceBState.currentDate),
       player: {
         ...choiceBState.player,
         name: playerName || "John Doe"
       }
-    });
+    };
+    setGameState(initialState);
     setHasStarted(true);
   }, []);
 

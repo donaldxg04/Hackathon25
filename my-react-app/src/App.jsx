@@ -9,7 +9,7 @@ function GameContent() {
 
   return (
     <>
-      <Dashboard />
+      {hasStarted && <Dashboard />}
       {!hasStarted && <StartMenu />}
     </>
   );
