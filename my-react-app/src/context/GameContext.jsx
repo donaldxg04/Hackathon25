@@ -21,7 +21,7 @@ const choiceBState = {
     housingStatus: "renting"
   },
   income: {
-    salary: 9000,        // Large firm DS role, monthly
+    salary: 4000,        // Large firm DS role, monthly
     investments: 0,
     other: 0
   },
@@ -41,7 +41,7 @@ const choiceBState = {
     happiness: 70
   },
   finance: {
-    netWorth: 0,         // Starts with no money
+    netWorth: 5000,         // Starts with small savings
     netWorthHistory: [
       { month: "Jan 2009", value: 0 }
     ],
@@ -94,84 +94,11 @@ export const GameProvider = ({ children }) => {
   // Track whether the game has been started via the start menu
   const [hasStarted, setHasStarted] = useState(false);
 
-  const [gameState, setGameState] = useState({
-    currentDate: new Date(2009, 0, 1), // January 1, 2009
-    player: {
-      name: "John Doe",
-      age: 25,
-      occupation: "Software Developer",
-      location: "San Francisco, CA",
-      housingStatus: "renting" // "renting" or "owner"
-    },
-    income: {
-      salary: 8000,
-      investments: 0,
-      other: 0
-    },
-    expenses: {
-      rent: 1500, // Only applicable when renting
-      mortgage: 0, // Only applicable when owning
-      utilities: 200,
-      food: 600,
-      transportation: 300,
-      insurance: 250,
-      entertainment: 300,
-      other: 350
-    },
-    stats: {
-      health: 80,
-      stress: 30,
-      happiness: 65
-    },
-    finance: {
-      netWorth: 50000,
-      netWorthHistory: [
-        { month: 'Jan 2009', value: 50000 }
-      ],
-      assetAllocation: {
-        checking: 50000,
-        investments: 0,
-        emergencyFund: 0,
-        retirement401k: 0
-      },
-      retirement401k: {
-        contributionPercent: 0, // 0-20% of salary
-        strategy: 'VOO', // VOO, VTI, or other index funds
-        balance: 0,
-        shares: 0 // Track 401k-specific shares separately
-      }
-    },
-    markets: {
-      positions: [
-        { symbol: 'ACME', shares: 0, price: 100 },
-        { symbol: 'TECH', shares: 0, price: 250 },
-        { symbol: 'CRYPTO_ETF', shares: 0, price: 50 },
-        { symbol: 'VOO', shares: 0, price: 100 }, // S&P 500 ETF
-        { symbol: 'VTI', shares: 0, price: 80 },    // Total Stock Market ETF
-        { symbol: 'VXUS', shares: 0, price: 60 }    // International Stock ETF
-      ],
-      priceHistory: {
-        ACME: [
-          { month: 'Jan 2009', value: 100 }
-        ],
-        TECH: [
-          { month: 'Jan 2009', value: 250 }
-        ],
-        CRYPTO_ETF: [
-          { month: 'Jan 2009', value: 50 }
-        ],
-        VOO: [
-          { month: 'Jan 2009', value: 100 }
-        ],
-        VTI: [
-          { month: 'Jan 2009', value: 80 }
-        ],
-        VXUS: [
-          { month: 'Jan 2009', value: 60 }
-        ]
-      }
-    }
-  });
+  // Game speed: 0 = paused, 1 = normal (1 day/sec), 5 = fast (5 days/sec)
+  const [gameSpeed, setGameSpeed] = useState(1);
+
+  // Use choiceBState as the default initial state
+  const [gameState, setGameState] = useState({...choiceBState});
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -376,95 +303,106 @@ export const GameProvider = ({ children }) => {
     return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
   };
 
-  const advanceMonth = useCallback(() => {
+  const advanceDay = useCallback(() => {
     setGameState(prev => {
-      // Create new date (next month)
+      // Create new date (next day)
       const newDate = new Date(prev.currentDate);
-      newDate.setMonth(newDate.getMonth() + 1);
+      newDate.setDate(newDate.getDate() + 1);
+
+      const dayOfMonth = newDate.getDate();
+      const isFirstOfMonth = dayOfMonth === 1;
+      const isFourteenthOfMonth = dayOfMonth === 14;
 
       // Check if year changed to increment age
       const ageIncrement = newDate.getFullYear() > prev.currentDate.getFullYear() ? 1 : 0;
 
-      // Calculate total income
-      const totalIncome = Object.values(prev.income).reduce((sum, val) => sum + val, 0);
+      let newAllocation = { ...prev.finance.assetAllocation };
+      let newPositions = [...prev.markets.positions];
+      let newPriceHistory = { ...prev.markets.priceHistory };
+      let new401kShares = prev.finance.retirement401k.shares || 0;
 
       // Calculate 401k contribution (pre-tax, deducted from salary)
       const salary = prev.income.salary;
       const contributionPercent = prev.finance.retirement401k.contributionPercent / 100;
       const monthly401kContribution = salary * contributionPercent;
-      const netSalary = salary - monthly401kContribution; // Salary after 401k deduction
 
-      // Calculate total expenses (use rent if renting, mortgage if owner)
-      let totalExpenses = 0;
-      for (const [key, value] of Object.entries(prev.expenses)) {
-        if (key === 'rent' && prev.player.housingStatus === 'renting') {
-          totalExpenses += value;
-        } else if (key === 'mortgage' && prev.player.housingStatus === 'owner') {
-          totalExpenses += value;
-        } else if (key !== 'rent' && key !== 'mortgage') {
-          totalExpenses += value;
+      // Salary payments: 1/2 of monthly salary on 1st and 14th (after 401k deduction)
+      if (isFirstOfMonth || isFourteenthOfMonth) {
+        const halfNetSalary = (salary - monthly401kContribution) / 2;
+        newAllocation.checking += halfNetSalary;
+        
+        // Add 401k contribution for this pay period (half month)
+        const half401kContribution = monthly401kContribution / 2;
+        const strategy = prev.finance.retirement401k.strategy;
+        if (half401kContribution > 0 && strategy) {
+          const strategyPosition = newPositions.find(p => p.symbol === strategy);
+          if (strategyPosition) {
+            const sharesToAdd = half401kContribution / strategyPosition.price;
+            new401kShares += sharesToAdd;
+          }
         }
       }
 
-      // Process checking account: income first (after 401k), then expenses
-      let newChecking = prev.finance.assetAllocation.checking;
+      // Rent and utilities paid on 1st of month
+      if (isFirstOfMonth) {
+        // Pay rent or mortgage
+        if (prev.player.housingStatus === 'renting') {
+          newAllocation.checking -= prev.expenses.rent;
+        } else if (prev.player.housingStatus === 'owner') {
+          newAllocation.checking -= prev.expenses.mortgage;
+        }
 
-      // Add income to checking (salary after 401k + other income)
-      newChecking += netSalary + (totalIncome - salary);
+        // Pay utilities
+        newAllocation.checking -= prev.expenses.utilities;
 
-      // Subtract expenses from checking
-      newChecking -= totalExpenses;
+        // Apply overdraft fee if checking went negative
+        const OVERDRAFT_FEE = 35;
+        if (newAllocation.checking < 0 && prev.finance.assetAllocation.checking >= 0) {
+          // Just went into overdraft
+          newAllocation.checking -= OVERDRAFT_FEE;
+        } else if (newAllocation.checking < 0 && prev.finance.assetAllocation.checking < 0) {
+          // Already in overdraft, apply fee again
+          newAllocation.checking -= OVERDRAFT_FEE;
+        }
 
-      // Apply overdraft fee if checking went negative
-      const OVERDRAFT_FEE = 35;
-      let overdraftFeeApplied = false;
-      if (newChecking < 0 && prev.finance.assetAllocation.checking >= 0) {
-        // Just went into overdraft this month
-        newChecking -= OVERDRAFT_FEE;
-        overdraftFeeApplied = true;
-      } else if (newChecking < 0 && prev.finance.assetAllocation.checking < 0) {
-        // Already in overdraft, apply fee again
-        newChecking -= OVERDRAFT_FEE;
-        overdraftFeeApplied = true;
-      }
+        // Apply monthly emergency fund interest on 1st of month
+        const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
+        const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
+        newAllocation.emergencyFund += emergencyFundInterest;
 
-      // Apply 2% monthly interest to emergency fund
-      const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
-      const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
+        // Update stock prices on 1st of month with some random variation (-5% to +5%)
+        newPositions = prev.markets.positions.map(position => ({
+          ...position,
+          price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
+        }));
 
-      // Update stock prices with some random variation (-5% to +5%)
-      let newPositions = prev.markets.positions.map(position => ({
-        ...position,
-        price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
-      }));
+        // Update price history for each stock on 1st of month
+        newPriceHistory = {};
+        for (const symbol in prev.markets.priceHistory) {
+          const position = newPositions.find(p => p.symbol === symbol);
+          const history = [...prev.markets.priceHistory[symbol], {
+            month: formatMonthYear(newDate),
+            value: position ? position.price : 0
+          }];
+          if (history.length > 12) {
+            history.shift();
+          }
+          newPriceHistory[symbol] = history;
+        }
 
-      // Process 401k contribution - invest in selected strategy
-      const strategy = prev.finance.retirement401k.strategy;
-      let new401kShares = prev.finance.retirement401k.shares || 0;
-      
-      // If 401k has a strategy selected, invest the contribution in that fund
-      if (monthly401kContribution > 0 && strategy) {
+        // Update 401k balance based on current value of holdings on 1st of month
+        const strategy = prev.finance.retirement401k.strategy;
         const strategyPosition = newPositions.find(p => p.symbol === strategy);
-        if (strategyPosition) {
-          const sharesToAdd = monthly401kContribution / strategyPosition.price;
-          new401kShares += sharesToAdd;
+        let new401kBalance = 0;
+        if (strategyPosition && new401kShares > 0) {
+          new401kBalance = new401kShares * strategyPosition.price;
         }
+        newAllocation.retirement401k = new401kBalance;
+      } else {
+        // Keep same positions and price history if not 1st
+        newPositions = prev.markets.positions;
+        newPriceHistory = prev.markets.priceHistory;
       }
-
-      // Update 401k balance based on current value of holdings
-      let new401kBalance = 0;
-      const strategyPosition = newPositions.find(p => p.symbol === strategy);
-      if (strategyPosition && new401kShares > 0) {
-        new401kBalance = new401kShares * strategyPosition.price;
-      }
-
-      const newAllocation = {
-        ...prev.finance.assetAllocation,
-        checking: newChecking,
-        emergencyFund: prev.finance.assetAllocation.emergencyFund + emergencyFundInterest,
-        retirement401k: new401kBalance
-      };
-
       // Calculate new net worth
       let newNetWorth = 0;
       for (const key in newAllocation) {
@@ -474,27 +412,22 @@ export const GameProvider = ({ children }) => {
         newNetWorth += position.shares * position.price;
       });
 
-      // Add to history (keep last 12 months)
-      const newHistory = [...prev.finance.netWorthHistory, {
-        month: formatMonthYear(newDate),
-        value: newNetWorth
-      }];
-      if (newHistory.length > 12) {
-        newHistory.shift();
-      }
-
-      // Update price history for each stock
-      const newPriceHistory = {};
-      for (const symbol in prev.markets.priceHistory) {
-        const position = newPositions.find(p => p.symbol === symbol);
-        const history = [...prev.markets.priceHistory[symbol], {
+      // Update net worth history only on 1st of month
+      let newHistory = prev.finance.netWorthHistory;
+      if (isFirstOfMonth) {
+        newHistory = [...prev.finance.netWorthHistory, {
           month: formatMonthYear(newDate),
-          value: position ? position.price : 0
+          value: newNetWorth
         }];
-        if (history.length > 12) {
-          history.shift();
+        if (newHistory.length > 12) {
+          newHistory.shift();
         }
-        newPriceHistory[symbol] = history;
+      } else {
+        // Update the current month's value
+        newHistory = [...prev.finance.netWorthHistory];
+        if (newHistory.length > 0) {
+          newHistory[newHistory.length - 1].value = newNetWorth;
+        }
       }
 
       return {
@@ -556,6 +489,8 @@ export const GameProvider = ({ children }) => {
 
   const value = {
     gameState,
+    gameSpeed,
+    setGameSpeed,
     formatCurrency,
     formatDate,
     recalculateNetWorth,
@@ -564,7 +499,7 @@ export const GameProvider = ({ children }) => {
     buyStock,
     sellStock,
     getStockPrice,
-    advanceMonth,
+    advanceDay,
     getTotalIncome,
     getTotalExpenses,
     update401kSettings,
