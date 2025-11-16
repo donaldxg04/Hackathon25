@@ -83,11 +83,16 @@ const Dashboard = () => {
   useEffect(() => {
     if (gameSpeed === 0 || activeModal === 'decision') return; // Paused or decision modal open
 
-    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed
+    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed (5 days/sec)
     const interval = gameSpeed === 1 ? 1000 : 200;
 
+    // Log game speed for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Game speed set to: ${gameSpeed}x (interval: ${interval}ms per day)`);
+    }
+
     const timer = setInterval(() => {
-      advanceDay();
+      advanceDay(); // Advances currentDate by 1 day and updates all stock prices
     }, interval);
 
     return () => clearInterval(timer);
@@ -129,7 +134,8 @@ const Dashboard = () => {
       {/* Right Column */}
       <div className="right-column">
         <div className="date-container">
-          <div className="date-display">
+          {/* Date display updates automatically as currentDate changes in GameContext */}
+          <div className="date-display" key={gameState?.currentDate?.getTime()}>
             {gameState?.currentDate && gameState.currentDate instanceof Date && !isNaN(gameState.currentDate.getTime())
               ? formatDate(gameState.currentDate)
               : 'Loading...'}

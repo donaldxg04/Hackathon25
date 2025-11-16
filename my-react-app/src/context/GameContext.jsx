@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const GameContext = createContext();
 
@@ -8,6 +8,67 @@ export const useGame = () => {
     throw new Error('useGame must be used within GameProvider');
   }
   return context;
+};
+
+// Helper function to parse CSV date string
+const parseCSVDate = (dateString) => {
+  try {
+    if (typeof dateString === 'string') {
+      // Handle ISO format (YYYY-MM-DD)
+      if (dateString.includes('-') && dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
+        return new Date(dateString);
+      }
+      // Handle M/D/YYYY format
+      if (dateString.includes('/')) {
+        const [month, day, year] = dateString.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      }
+    }
+    return new Date(dateString);
+  } catch (error) {
+    return null;
+  }
+};
+
+// Helper function to get price for a specific date (or previous available date)
+const getPriceForDate = (symbolData, targetDate) => {
+  if (!symbolData || !Array.isArray(symbolData) || symbolData.length === 0) return null;
+  if (!targetDate) return null;
+  
+  const target = targetDate instanceof Date ? targetDate : new Date(targetDate);
+  if (isNaN(target.getTime())) return null;
+  
+  // Normalize target date to start of day for comparison
+  const targetStart = new Date(target);
+  targetStart.setHours(0, 0, 0, 0);
+  
+  // Find the price for the exact date, or the most recent previous date
+  let bestMatch = null;
+  let bestDate = null;
+  
+  for (const item of symbolData) {
+    if (!item.dateString) continue;
+    const itemDate = parseCSVDate(item.dateString);
+    if (!itemDate || isNaN(itemDate.getTime())) continue;
+    
+    const itemDateStart = new Date(itemDate);
+    itemDateStart.setHours(0, 0, 0, 0);
+    
+    // If exact match, return immediately
+    if (itemDateStart.getTime() === targetStart.getTime()) {
+      return item.value;
+    }
+    
+    // Track the most recent date that's before or equal to target
+    if (itemDateStart <= targetStart) {
+      if (!bestDate || itemDateStart > bestDate) {
+        bestDate = itemDateStart;
+        bestMatch = item.value;
+      }
+    }
+  }
+  
+  return bestMatch;
 };
 
 // Choice B state template for Big Tech Data Science role
@@ -53,38 +114,38 @@ const choiceBState = {
     },
     retirement401k: {
       contributionPercent: 0,
-      strategy: 'VOO',
+      strategy: 'IVV',  // S&P 500 ETF (matches CSV data)
       balance: 0,
       shares: 0
     }
   },
   markets: {
     positions: [
-      { symbol: "ACME", shares: 0, price: 100 },
-      { symbol: "TECH", shares: 100, price: 250 },   // Stock grant
-      { symbol: "CRYPTO_ETF", shares: 0, price: 50 },
-      { symbol: "VOO", shares: 0, price: 100 },
-      { symbol: "VTI", shares: 0, price: 80 },
-      { symbol: "VXUS", shares: 0, price: 60 }
+      { symbol: "VNQ", shares: 0, price: 30.05999947 },      // Real Estate REIT - from CSV 1/1/2009
+      { symbol: "IVV", shares: 0, price: 82.97000122 },      // S&P 500 ETF - from CSV 1/1/2009
+      { symbol: "VTI", shares: 0, price: 41.13999939 },      // Total Market ETF - from CSV 1/1/2009
+      { symbol: "NVDA", shares: 100, price: 0.198750004 },   // NVIDIA - Stock grant from CSV 1/1/2009
+      { symbol: "LMT", shares: 0, price: 82.04000092 },      // Lockheed Martin - from CSV 1/1/2009
+      { symbol: "PFE", shares: 0, price: 13.83301735 }       // Pfizer - from CSV 1/1/2009
     ],
     priceHistory: {
-      ACME: [
-        { month: "Jan 2009", value: 100 }
+      VNQ: [
+        { month: "Jan 2009", value: 30.05999947 }
       ],
-      TECH: [
-        { month: "Jan 2009", value: 250 }
-      ],
-      CRYPTO_ETF: [
-        { month: "Jan 2009", value: 50 }
-      ],
-      VOO: [
-        { month: "Jan 2009", value: 100 }
+      IVV: [
+        { month: "Jan 2009", value: 82.97000122 }
       ],
       VTI: [
-        { month: "Jan 2009", value: 80 }
+        { month: "Jan 2009", value: 41.13999939 }
       ],
-      VXUS: [
-        { month: "Jan 2009", value: 60 }
+      NVDA: [
+        { month: "Jan 2009", value: 0.198750004 }
+      ],
+      LMT: [
+        { month: "Jan 2009", value: 82.04000092 }
+      ],
+      PFE: [
+        { month: "Jan 2009", value: 13.83301735 }
       ]
     }
   }
@@ -99,6 +160,72 @@ export const GameProvider = ({ children }) => {
 
   // Use choiceBState as the default initial state
   const [gameState, setGameState] = useState({...choiceBState});
+
+  // Load CSV stock data
+  const [csvStockData, setCsvStockData] = useState(null);
+
+  useEffect(() => {
+    async function loadStockData() {
+      try {
+        const response = await fetch('/stock_watch_data.csv');
+        if (!response.ok) {
+          console.warn('CSV not available');
+          return;
+        }
+        
+        const csvText = await response.text();
+        if (!csvText || csvText.length === 0) return;
+        
+        // Parse CSV
+        const lines = csvText.trim().split('\n');
+        const data = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const values = line.split(',');
+          if (values.length >= 4) {
+            data.push({
+              symbol: values[1],
+              date: values[2],
+              price: parseFloat(values[3]) || 0
+            });
+          }
+        }
+        
+        // Group by symbol
+        const grouped = {};
+        data.forEach(item => {
+          if (!grouped[item.symbol]) {
+            grouped[item.symbol] = [];
+          }
+          const dateObj = parseCSVDate(item.date);
+          grouped[item.symbol].push({
+            dateString: item.date,
+            date: dateObj,
+            value: item.price
+          });
+        });
+        
+        // Sort each symbol's data by date
+        Object.keys(grouped).forEach(symbol => {
+          grouped[symbol].sort((a, b) => {
+            if (!a.date || !b.date) return 0;
+            return a.date - b.date;
+          });
+        });
+        
+        setCsvStockData(grouped);
+        window.stockDataFromCSV = grouped;
+        console.log('CSV stock data loaded in GameContext');
+      } catch (error) {
+        console.warn('CSV load failed:', error);
+      }
+    }
+
+    loadStockData();
+  }, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -317,20 +444,35 @@ export const GameProvider = ({ children }) => {
     setGameState(prev => {
       // Safety check: ensure currentDate exists and is valid
       if (!prev?.currentDate) {
+        console.warn('advanceDay: currentDate is invalid');
         return prev; // Don't advance if date is invalid
       }
       
-      // Create new date (next day)
+      // Create new date (next day) - ALWAYS advance by 1 day
       const currentDate = prev.currentDate instanceof Date 
         ? prev.currentDate 
         : new Date(prev.currentDate);
       
       if (isNaN(currentDate.getTime())) {
+        console.warn('advanceDay: currentDate cannot be parsed');
         return prev; // Don't advance if date is invalid
       }
       
-      const newDate = new Date(currentDate);
-      newDate.setDate(newDate.getDate() + 1);
+      // Create a NEW Date object and advance by 1 day - this happens EVERY time advanceDay is called
+      // Use getTime() and create new Date to ensure React detects the change
+      const currentTime = currentDate.getTime();
+      const newDate = new Date(currentTime + 24 * 60 * 60 * 1000); // Add 1 day in milliseconds
+      
+      // Ensure we have a valid new date
+      if (isNaN(newDate.getTime())) {
+        console.warn('advanceDay: newDate is invalid');
+        return prev; // Don't advance if new date is invalid
+      }
+      
+      // Log date advancement for debugging (can be removed in production)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Day advanced: ${formatMonthYear(currentDate)} → ${formatMonthYear(newDate)}`);
+      }
 
       const dayOfMonth = newDate.getDate();
       const isFirstOfMonth = dayOfMonth === 1;
@@ -393,14 +535,37 @@ export const GameProvider = ({ children }) => {
         const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
         const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
         newAllocation.emergencyFund += emergencyFundInterest;
+      }
 
-        // Update stock prices on 1st of month with some random variation (-5% to +5%)
-        newPositions = prev.markets.positions.map(position => ({
-          ...position,
-          price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
-        }));
+      // Update stock prices EVERY DAY using CSV data (or keep current price if CSV not available)
+      const stockData = csvStockData || window.stockDataFromCSV;
+      if (stockData) {
+        newPositions = prev.markets.positions.map(position => {
+          const symbolData = stockData[position.symbol];
+          if (symbolData) {
+            const newPrice = getPriceForDate(symbolData, newDate);
+            if (newPrice !== null && newPrice > 0) {
+              // Log price updates for debugging
+              if (process.env.NODE_ENV === 'development' && position.price !== newPrice) {
+                console.log(`Price updated for ${position.symbol}: $${position.price.toFixed(2)} → $${newPrice.toFixed(2)}`);
+              }
+              return {
+                ...position,
+                price: newPrice
+              };
+            }
+          }
+          // If no CSV data for this symbol/date, keep current price
+          return position;
+        });
+      } else {
+        // If CSV not loaded yet, keep current prices
+        console.warn('Stock data not loaded yet, keeping current prices');
+        newPositions = prev.markets.positions;
+      }
 
-        // Update price history for each stock on 1st of month
+      // Update price history for each stock on 1st of month only
+      if (isFirstOfMonth) {
         newPriceHistory = {};
         for (const symbol in prev.markets.priceHistory) {
           const position = newPositions.find(p => p.symbol === symbol);
@@ -413,28 +578,20 @@ export const GameProvider = ({ children }) => {
           }
           newPriceHistory[symbol] = history;
         }
-
-        // Update 401k balance based on current value of holdings on 1st of month
-        const strategy = prev.finance.retirement401k.strategy;
-        const strategyPosition = newPositions.find(p => p.symbol === strategy);
-        if (strategyPosition && new401kShares > 0) {
-          new401kBalance = new401kShares * strategyPosition.price;
-        } else {
-          new401kBalance = 0;
-        }
-        newAllocation.retirement401k = new401kBalance;
       } else {
-        // Keep same positions and price history if not 1st
-        newPositions = prev.markets.positions;
+        // Keep same price history if not 1st of month
         newPriceHistory = prev.markets.priceHistory;
-        
-        // Still update 401k balance based on current share count and prices
-        const strategy = prev.finance.retirement401k.strategy;
-        const strategyPosition = newPositions.find(p => p.symbol === strategy);
-        if (strategyPosition && new401kShares > 0) {
-          new401kBalance = new401kShares * strategyPosition.price;
-        }
       }
+
+      // Update 401k balance based on current value of holdings (every day)
+      const strategy = prev.finance.retirement401k.strategy;
+      const strategyPosition = newPositions.find(p => p.symbol === strategy);
+      if (strategyPosition && new401kShares > 0) {
+        new401kBalance = new401kShares * strategyPosition.price;
+      } else {
+        new401kBalance = 0;
+      }
+      newAllocation.retirement401k = new401kBalance;
       // Calculate new net worth
       let newNetWorth = 0;
       for (const key in newAllocation) {
@@ -487,7 +644,7 @@ export const GameProvider = ({ children }) => {
         }
       };
     });
-  }, []);
+  }, [csvStockData]);
 
   const getTotalIncome = useCallback(() => {
     return Object.values(gameState.income).reduce((sum, val) => sum + val, 0);
