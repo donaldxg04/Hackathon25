@@ -89,7 +89,11 @@ const choiceBState = {
     }
   },
   properties: [],  // Array of owned properties
-  vehicles: []     // Array of owned vehicles
+  vehicles: [],     // Array of owned vehicles
+  storyProgress: {
+    currentEventIndex: 0,  // Track which story event we're on
+    completedEvents: []     // Track completed event IDs
+  }
 };
 
 export const GameProvider = ({ children }) => {
@@ -553,6 +557,23 @@ export const GameProvider = ({ children }) => {
     });
   }, []);
 
+  const completeStoryEvent = useCallback((eventId) => {
+    setGameState(prev => {
+      const completedEvents = prev.storyProgress?.completedEvents || [];
+      if (!completedEvents.includes(eventId)) {
+        return {
+          ...prev,
+          storyProgress: {
+            ...prev.storyProgress,
+            completedEvents: [...completedEvents, eventId],
+            currentEventIndex: (prev.storyProgress?.currentEventIndex || 0) + 1
+          }
+        };
+      }
+      return prev;
+    });
+  }, []);
+
   const buyProperty = useCallback((property) => {
     if (!property || !property.price) {
       return { success: false, message: 'Invalid property data.' };
@@ -785,6 +806,7 @@ export const GameProvider = ({ children }) => {
     sellProperty,
     buyVehicle,
     sellVehicle,
+    completeStoryEvent,
     hasStarted,
     startGameWithChoiceB
   };

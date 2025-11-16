@@ -10,61 +10,14 @@ import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
 import PropertiesVehiclesModal from './PropertiesVehiclesModal';
 import PropertiesVehiclesCard from './PropertiesVehiclesCard';
+import { getNextStoryEvent } from '../data/storyEvents';
 
 
 
 const Dashboard = () => {
   const { gameState, formatDate, advanceDay, gameSpeed, setGameSpeed } = useGame();
   const [activeModal, setActiveModal] = useState(null);
-  const [shownMonths, setShownMonths] = useState(new Set()); // Track which month-years have triggered
-
-  // Define trigger months: {month: 1-12, year: YYYY}
-  const triggerMonths = [
-    { month: 2, year: 2009 },
-    { month: 5, year: 2009 },
-    { month: 9, year: 2009 },
-    { month: 12, year: 2009 },
-    { month: 1, year: 2010 },
-    { month: 6, year: 2010 },
-    { month: 10, year: 2010 },
-    { month: 3, year: 2011 },
-    { month: 4, year: 2011 },
-    { month: 7, year: 2011 },
-    { month: 9, year: 2011 },
-    { month: 11, year: 2011 },
-    { month: 1, year: 2012 },
-    { month: 2, year: 2012 },
-    { month: 4, year: 2012 },
-    { month: 8, year: 2012 },
-    { month: 4, year: 2013 },
-    { month: 7, year: 2013 },
-    { month: 9, year: 2013 },
-    { month: 12, year: 2013 },
-    { month: 3, year: 2014 },
-    { month: 8, year: 2014 },
-    { month: 10, year: 2014 },
-    { month: 1, year: 2015 },
-    { month: 5, year: 2015 },
-    { month: 7, year: 2015 },
-    { month: 9, year: 2015 },
-    { month: 12, year: 2015 },
-    { month: 2, year: 2016 },
-    { month: 6, year: 2016 },
-    { month: 9, year: 2016 },
-    { month: 11, year: 2016 },
-    { month: 3, year: 2017 },
-    { month: 7, year: 2017 },
-    { month: 11, year: 2017 },
-    { month: 1, year: 2018 },
-    { month: 4, year: 2018 },
-    { month: 6, year: 2018 },
-    { month: 9, year: 2018 },
-    { month: 12, year: 2018 },
-    { month: 2, year: 2019 },
-    { month: 5, year: 2019 },
-    { month: 8, year: 2019 },
-    { month: 10, year: 2019 }
-  ];
+  const [currentStoryEvent, setCurrentStoryEvent] = useState(null);
 
   const openModal = (modalId) => {
     setActiveModal(modalId);
@@ -73,6 +26,7 @@ const Dashboard = () => {
 
   const closeModal = () => {
     setActiveModal(null);
+    setCurrentStoryEvent(null);
     document.body.style.overflow = '';
   };
 
@@ -95,30 +49,29 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, [gameSpeed, advanceDay, activeModal]);
 
-  // Check for decision modal triggers
+  // Check for story event triggers based on age and month
   useEffect(() => {
-    if (!gameState?.currentDate) return; // Safety check
+    if (!gameState?.currentDate || !gameState?.player) return; // Safety check
     
     const currentDate = gameState.currentDate;
     // Ensure currentDate is a valid Date object
     if (!(currentDate instanceof Date) || isNaN(currentDate.getTime())) return;
     
-    const currentMonthYearKey = getMonthYearKey(currentDate);
+    const currentAge = gameState.player.age;
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    const completedEventIds = gameState.storyProgress?.completedEvents || [];
     
-    // Check if current month and year matches any trigger month
-    const matchesTrigger = triggerMonths.some(trigger => {
-      return currentDate.getFullYear() === trigger.year &&
-             currentDate.getMonth() + 1 === trigger.month;
-    });
-
-    // Show modal if it matches a trigger month and hasn't been shown for this month yet
-    if (matchesTrigger && !shownMonths.has(currentMonthYearKey) && activeModal === null) {
+    // Get the next story event for this age and month
+    const nextEvent = getNextStoryEvent(currentAge, currentMonth, completedEventIds);
+    
+    // Show modal if there's an event and no modal is currently open
+    if (nextEvent && activeModal === null) {
       // Pause the game when decision modal opens
       setGameSpeed(0);
+      setCurrentStoryEvent(nextEvent);
       openModal('decision');
-      setShownMonths(prev => new Set([...prev, currentMonthYearKey]));
     }
-  }, [gameState.currentDate, shownMonths, activeModal, setGameSpeed]);
+  }, [gameState.currentDate, gameState.player?.age, gameState.storyProgress, activeModal, setGameSpeed]);
 
   return (
     <div className="dashboard-container">
@@ -169,7 +122,12 @@ const Dashboard = () => {
       </div>
 
       {/* Modals */}
-      {activeModal === 'decision' && <DecisionModal onClose={closeModal} />}
+      {activeModal === 'decision' && currentStoryEvent && (
+        <DecisionModal 
+          event={currentStoryEvent} 
+          onClose={closeModal} 
+        />
+      )}
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}

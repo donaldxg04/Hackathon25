@@ -524,6 +524,15 @@ body {
     padding: 24px;
 }
 
+.decision-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #4ade80;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(74, 222, 128, 0.3);
+}
+
 .decision-prompt {
     font-size: 18px;
     line-height: 1.6;
