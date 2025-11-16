@@ -27,7 +27,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-     if (gameState.currentDate.includes('2012') && !hasShownDecision && activeModal === null) {
+     if (gameState.currentDate.getFullYear() === 2012 && !hasShownDecision && activeModal === null) {
       openModal('decision');
       setHasShownDecision(true);
     }
@@ -52,11 +52,10 @@ const Dashboard = () => {
       </div>
 
       {/* Modals */}
-      
+      {activeModal === 'decision' && <DecisionModal onClose={closeModal} />}
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}
-      {activeModal === 'DecisionModal' && <DecisionModal onClose={closeModal} />}
     </div>
   );
 };
