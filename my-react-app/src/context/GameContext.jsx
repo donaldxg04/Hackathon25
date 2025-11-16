@@ -87,7 +87,9 @@ const choiceBState = {
         { month: "Jan 2009", value: 60 }
       ]
     }
-  }
+  },
+  properties: [],  // Array of owned properties
+  vehicles: []     // Array of owned vehicles
 };
 
 export const GameProvider = ({ children }) => {
@@ -124,6 +126,16 @@ export const GameProvider = ({ children }) => {
       prev.markets.positions.forEach(position => {
         // Only count non-401k positions (401k shares are tracked but not double-counted)
         total += position.shares * position.price;
+      });
+
+      // Add properties value
+      (prev.properties || []).forEach(property => {
+        total += property.currentValue || property.price * 0.9;
+      });
+
+      // Add vehicles value
+      (prev.vehicles || []).forEach(vehicle => {
+        total += vehicle.currentValue || vehicle.price * 0.85;
       });
       
       const newHistory = [...prev.finance.netWorthHistory];
@@ -541,6 +553,200 @@ export const GameProvider = ({ children }) => {
     });
   }, []);
 
+  const buyProperty = useCallback((property) => {
+    if (!property || !property.price) {
+      return { success: false, message: 'Invalid property data.' };
+    }
+
+    setGameState(prev => {
+      // Check if already owned
+      if (prev.properties.some(p => p.id === property.id)) {
+        return prev;
+      }
+
+      // Check if can afford
+      if (prev.finance.assetAllocation.checking < property.price) {
+        return prev;
+      }
+
+      // Deduct from checking
+      const newAllocation = { ...prev.finance.assetAllocation };
+      newAllocation.checking -= property.price;
+
+      // Add property
+      const newProperty = {
+        ...property,
+        purchaseDate: new Date(prev.currentDate),
+        currentValue: property.price * 0.9 // Depreciate slightly on purchase
+      };
+      const newProperties = [...prev.properties, newProperty];
+
+      // Update housing status if this is first property
+      let newHousingStatus = prev.player.housingStatus;
+      if (prev.properties.length === 0) {
+        newHousingStatus = 'owner';
+        // Update expenses to use mortgage instead of rent
+        const newExpenses = { ...prev.expenses };
+        newExpenses.mortgage = property.monthlyMortgage;
+        newExpenses.rent = 0;
+        return {
+          ...prev,
+          player: { ...prev.player, housingStatus: newHousingStatus },
+          expenses: newExpenses,
+          finance: {
+            ...prev.finance,
+            assetAllocation: newAllocation
+          },
+          properties: newProperties
+        };
+      }
+
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          assetAllocation: newAllocation
+        },
+        properties: newProperties
+      };
+    });
+
+    recalculateNetWorth();
+    return { success: true, message: `Successfully purchased ${property.name}!` };
+  }, [recalculateNetWorth]);
+
+  const sellProperty = useCallback((propertyId) => {
+    setGameState(prev => {
+      const property = prev.properties.find(p => p.id === propertyId);
+      if (!property) {
+        return prev;
+      }
+
+      // Calculate sale value (90% of original price, can be adjusted)
+      const saleValue = property.currentValue || property.price * 0.9;
+
+      // Remove property
+      const newProperties = prev.properties.filter(p => p.id !== propertyId);
+
+      // Add to checking
+      const newAllocation = { ...prev.finance.assetAllocation };
+      newAllocation.checking += saleValue;
+
+      // Update housing status if this was the only property
+      let newHousingStatus = prev.player.housingStatus;
+      let newExpenses = { ...prev.expenses };
+      if (newProperties.length === 0 && prev.player.housingStatus === 'owner') {
+        newHousingStatus = 'renting';
+        // Switch back to rent
+        newExpenses.mortgage = 0;
+        newExpenses.rent = 1700; // Default rent
+      }
+
+      return {
+        ...prev,
+        player: { ...prev.player, housingStatus: newHousingStatus },
+        expenses: newExpenses,
+        finance: {
+          ...prev.finance,
+          assetAllocation: newAllocation
+        },
+        properties: newProperties
+      };
+    });
+
+    recalculateNetWorth();
+    return { success: true, message: 'Property sold successfully!' };
+  }, [recalculateNetWorth]);
+
+  const buyVehicle = useCallback((vehicle) => {
+    if (!vehicle || !vehicle.price) {
+      return { success: false, message: 'Invalid vehicle data.' };
+    }
+
+    setGameState(prev => {
+      // Check if already owned
+      if (prev.vehicles.some(v => v.id === vehicle.id)) {
+        return prev;
+      }
+
+      // Check if can afford
+      if (prev.finance.assetAllocation.checking < vehicle.price) {
+        return prev;
+      }
+
+      // Deduct from checking
+      const newAllocation = { ...prev.finance.assetAllocation };
+      newAllocation.checking -= vehicle.price;
+
+      // Add vehicle
+      const newVehicle = {
+        ...vehicle,
+        purchaseDate: new Date(prev.currentDate),
+        currentValue: vehicle.price * 0.85 // Vehicles depreciate more
+      };
+      const newVehicles = [...prev.vehicles, newVehicle];
+
+      // Update transportation expense if this is first vehicle
+      let newExpenses = { ...prev.expenses };
+      if (prev.vehicles.length === 0) {
+        // Add vehicle payment to transportation
+        newExpenses.transportation = (newExpenses.transportation || 0) + vehicle.monthlyPayment;
+      } else {
+        // Add to existing transportation
+        newExpenses.transportation = (newExpenses.transportation || 0) + vehicle.monthlyPayment;
+      }
+
+      return {
+        ...prev,
+        expenses: newExpenses,
+        finance: {
+          ...prev.finance,
+          assetAllocation: newAllocation
+        },
+        vehicles: newVehicles
+      };
+    });
+
+    recalculateNetWorth();
+    return { success: true, message: `Successfully purchased ${vehicle.name}!` };
+  }, [recalculateNetWorth]);
+
+  const sellVehicle = useCallback((vehicleId) => {
+    setGameState(prev => {
+      const vehicle = prev.vehicles.find(v => v.id === vehicleId);
+      if (!vehicle) {
+        return prev;
+      }
+
+      // Calculate sale value
+      const saleValue = vehicle.currentValue || vehicle.price * 0.85;
+
+      // Remove vehicle
+      const newVehicles = prev.vehicles.filter(v => v.id !== vehicleId);
+
+      // Add to checking
+      const newAllocation = { ...prev.finance.assetAllocation };
+      newAllocation.checking += saleValue;
+
+      // Update transportation expense
+      let newExpenses = { ...prev.expenses };
+      newExpenses.transportation = Math.max(0, (newExpenses.transportation || 0) - vehicle.monthlyPayment);
+
+      return {
+        ...prev,
+        expenses: newExpenses,
+        finance: {
+          ...prev.finance,
+          assetAllocation: newAllocation
+        },
+        vehicles: newVehicles
+      };
+    });
+
+    recalculateNetWorth();
+    return { success: true, message: 'Vehicle sold successfully!' };
+  }, [recalculateNetWorth]);
+
   // Initialize game with Choice B (Big Tech Data Science role) and player name
   const startGameWithChoiceB = useCallback((playerName) => {
     // Ensure Date object is properly created (not just copied)
@@ -575,6 +781,10 @@ export const GameProvider = ({ children }) => {
     updateExpense,
     addExpense,
     removeExpense,
+    buyProperty,
+    sellProperty,
+    buyVehicle,
+    sellVehicle,
     hasStarted,
     startGameWithChoiceB
   };

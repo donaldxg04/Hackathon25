@@ -1649,3 +1649,356 @@ body {
         font-size: 13px;
     }
 }
+
+/* Properties & Vehicles Card */
+.properties-vehicles-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.properties-vehicles-card.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.properties-vehicles-card.locked:hover {
+    opacity: 0.8;
+}
+
+.card-header-with-icon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.lock-icon-small {
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.pv-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pv-card-stats {
+    display: flex;
+    gap: 16px;
+}
+
+.pv-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pv-stat-label {
+    font-size: 12px;
+    color: #a8d8ea;
+}
+
+.pv-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #4ade80;
+}
+
+.pv-card-hint {
+    font-size: 11px;
+    color: rgba(168, 216, 234, 0.6);
+    margin-top: 4px;
+}
+
+.pv-card-locked {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.pv-card-locked p {
+    margin: 4px 0;
+    color: #a8d8ea;
+    font-size: 13px;
+}
+
+.pv-card-progress {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4ade80;
+}
+
+/* Properties & Vehicles Modal */
+.locked-modal {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.locked-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.lock-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.7;
+}
+
+.locked-content h3 {
+    color: #f87171;
+    font-size: 24px;
+    margin-bottom: 16px;
+}
+
+.locked-content p {
+    color: #d4e8f0;
+    margin: 12px 0;
+    line-height: 1.6;
+}
+
+.current-networth {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 20px 0;
+}
+
+.remaining-amount {
+    color: #4ade80;
+    font-weight: 500;
+}
+
+.properties-vehicles-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.pv-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.pv-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #a8d8ea;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: -2px;
+}
+
+.pv-tab:hover {
+    color: #4ade80;
+    border-bottom-color: rgba(74, 222, 128, 0.5);
+}
+
+.pv-tab.active {
+    color: #4ade80;
+    border-bottom-color: #4ade80;
+}
+
+.pv-category-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pv-category-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #a8d8ea;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pv-category-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(74, 222, 128, 0.5);
+}
+
+.pv-category-btn.active {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: #4ade80;
+    color: #4ade80;
+}
+
+.pv-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.pv-message.success {
+    background: rgba(74, 222, 128, 0.2);
+    border: 1px solid #4ade80;
+    color: #4ade80;
+}
+
+.pv-message.error {
+    background: rgba(248, 113, 113, 0.2);
+    border: 1px solid #f87171;
+    color: #f87171;
+}
+
+.pv-content h3 {
+    color: #4ade80;
+    margin-bottom: 16px;
+    font-size: 18px;
+}
+
+.pv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pv-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.pv-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+.pv-item.unaffordable {
+    opacity: 0.6;
+}
+
+.pv-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.pv-item-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.pv-item-info h4 {
+    color: #4ade80;
+    font-size: 18px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.pv-item-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.pv-item-details span {
+    color: #a8d8ea;
+    font-size: 13px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.pv-item-description {
+    color: #d4e8f0;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+.pv-item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    min-width: 150px;
+}
+
+.pv-item-price {
+    font-size: 20px;
+    font-weight: 700;
+    color: #4ade80;
+}
+
+.pv-item-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #a8d8ea;
+    text-align: right;
+}
+
+.btn-pv-buy,
+.btn-pv-sell,
+.btn-pv-owned {
+    background: rgba(74, 222, 128, 0.2);
+    border: 2px solid #4ade80;
+    border-radius: 6px;
+    color: #4ade80;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.btn-pv-buy:hover:not(.disabled):not(:disabled) {
+    background: rgba(74, 222, 128, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-pv-buy.disabled,
+.btn-pv-buy:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(248, 113, 113, 0.2);
+    border-color: #f87171;
+    color: #f87171;
+}
+
+.btn-pv-sell {
+    background: rgba(248, 113, 113, 0.2);
+    border-color: #f87171;
+    color: #f87171;
+}
+
+.btn-pv-sell:hover {
+    background: rgba(248, 113, 113, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-pv-owned {
+    background: rgba(168, 216, 234, 0.2);
+    border-color: #a8d8ea;
+    color: #a8d8ea;
+    cursor: not-allowed;
+}
+
+.pv-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #a8d8ea;
+}
+
+.pv-empty p {
+    margin: 8px 0;
+    font-size: 14px;
+}

@@ -8,6 +8,8 @@ import NetWorthModal from './NetWorthModal';
 import AssetAllocationModal from './AssetAllocationModal';
 import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
+import PropertiesVehiclesModal from './PropertiesVehiclesModal';
+import PropertiesVehiclesCard from './PropertiesVehiclesCard';
 
 
 
@@ -124,6 +126,7 @@ const Dashboard = () => {
       <div className="left-column">
         <NetWorthCard onClick={() => openModal('netWorth')} />
         <AssetAllocationCard onClick={() => openModal('assetAllocation')} />
+        <PropertiesVehiclesCard onClick={() => openModal('propertiesVehicles')} />
       </div>
 
       {/* Right Column */}
@@ -170,6 +173,7 @@ const Dashboard = () => {
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}
+      {activeModal === 'propertiesVehicles' && <PropertiesVehiclesModal onClose={closeModal} />}
     </div>
   );
 };
