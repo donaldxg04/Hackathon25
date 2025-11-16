@@ -52,10 +52,11 @@ const Dashboard = () => {
       </div>
 
       {/* Modals */}
-      {activeModal === 'yourNewModal' && <YourNewModal onClose={closeModal} />}
+      
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}
+      {activeModal === 'DecisionModal' && <DecisionModal onClose={closeModal} />}
     </div>
   );
 };
