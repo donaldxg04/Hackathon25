@@ -44,7 +44,7 @@ const EXPENSE_LABELS = {
 };
 
 const AssetAllocationModal = ({ onClose }) => {
-  const { gameState, formatCurrency, transferFunds, getTotalIncome, getTotalExpenses, update401kSettings } = useGame();
+  const { gameState, formatCurrency, transferFunds, getTotalIncome, getTotalExpenses, update401kSettings, updateExpense, addExpense, removeExpense } = useGame();
 
   // Get available accounts (exclude real estate if renting)
   const availableAccounts = Object.keys(gameState.finance.assetAllocation);
@@ -62,6 +62,9 @@ const AssetAllocationModal = ({ onClose }) => {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [retirement401kContribution, setRetirement401kContribution] = useState(gameState.finance.retirement401k.contributionPercent);
   const [retirement401kStrategy, setRetirement401kStrategy] = useState(gameState.finance.retirement401k.strategy);
+  const [editingExpenses, setEditingExpenses] = useState({});
+  const [newExpenseName, setNewExpenseName] = useState('');
+  const [newExpenseAmount, setNewExpenseAmount] = useState('');
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -99,6 +102,61 @@ const AssetAllocationModal = ({ onClose }) => {
     update401kSettings(retirement401kContribution, retirement401kStrategy);
     setMessage({ text: '401k settings updated successfully.', type: 'success' });
     setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+  };
+
+  const handleExpenseChange = (expenseKey, value) => {
+    const amount = parseFloat(value) || 0;
+    updateExpense(expenseKey, amount);
+    setEditingExpenses(prev => {
+      const newEditing = { ...prev };
+      delete newEditing[expenseKey];
+      return newEditing;
+    });
+  };
+
+  const handleAddExpense = () => {
+    if (!newExpenseName.trim()) {
+      setMessage({ text: 'Please enter an expense name.', type: 'error' });
+      return;
+    }
+    const amount = parseFloat(newExpenseAmount) || 0;
+    if (amount <= 0) {
+      setMessage({ text: 'Please enter a valid amount greater than zero.', type: 'error' });
+      return;
+    }
+    // Convert to a valid key (lowercase, replace spaces with underscores)
+    const expenseKey = newExpenseName.trim().toLowerCase().replace(/\s+/g, '_');
+    addExpense(expenseKey, amount);
+    setNewExpenseName('');
+    setNewExpenseAmount('');
+    setMessage({ text: 'Expense added successfully.', type: 'success' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+  };
+
+  const handleRemoveExpense = (expenseKey) => {
+    if (expenseKey === 'rent' || expenseKey === 'mortgage') {
+      setMessage({ text: 'Cannot remove rent or mortgage expenses.', type: 'error' });
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+      return;
+    }
+    removeExpense(expenseKey);
+    setMessage({ text: 'Expense removed successfully.', type: 'success' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+  };
+
+  const startEditingExpense = (expenseKey) => {
+    setEditingExpenses(prev => ({
+      ...prev,
+      [expenseKey]: gameState.expenses[expenseKey] || 0
+    }));
+  };
+
+  const cancelEditingExpense = (expenseKey) => {
+    setEditingExpenses(prev => {
+      const newEditing = { ...prev };
+      delete newEditing[expenseKey];
+      return newEditing;
+    });
   };
 
   const indexFunds = [
@@ -352,73 +410,121 @@ const AssetAllocationModal = ({ onClose }) => {
             <div className="breakdown-section detailed-section">
               <h3>Expenses Breakdown</h3>
               <div className="breakdown-list">
-                <div className="breakdown-category">
-                  <div className="breakdown-item category-header">
-                    <span className="breakdown-label">Housing:</span>
-                    <span className="breakdown-value negative">{formatCurrency(housingTotal)}</span>
-                  </div>
-                  {housingExpenses.rent > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Rent:</span>
-                      <span className="breakdown-value negative">{formatCurrency(housingExpenses.rent)}</span>
+                {/* Render all expenses with edit/remove functionality */}
+                {Object.entries(gameState.expenses).map(([expenseKey, expenseValue]) => {
+                  if (expenseValue === 0 && expenseKey !== 'rent' && expenseKey !== 'mortgage') return null;
+                  
+                  const isEditing = editingExpenses.hasOwnProperty(expenseKey);
+                  const expenseLabel = EXPENSE_LABELS[expenseKey] || expenseKey.charAt(0).toUpperCase() + expenseKey.slice(1).replace(/_/g, ' ');
+                  const isProtected = expenseKey === 'rent' || expenseKey === 'mortgage';
+                  
+                  return (
+                    <div key={expenseKey} className="breakdown-item expense-item-editable">
+                      <div className="expense-item-content">
+                        <span className="breakdown-label">{expenseLabel}:</span>
+                        {isEditing ? (
+                          <div className="expense-edit-controls">
+                            <input
+                              type="number"
+                              className="expense-edit-input"
+                              min="0"
+                              step="0.01"
+                              value={editingExpenses[expenseKey]}
+                              onChange={(e) => setEditingExpenses(prev => ({
+                                ...prev,
+                                [expenseKey]: parseFloat(e.target.value) || 0
+                              }))}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleExpenseChange(expenseKey, editingExpenses[expenseKey]);
+                                } else if (e.key === 'Escape') {
+                                  cancelEditingExpense(expenseKey);
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              className="btn-expense-save"
+                              onClick={() => handleExpenseChange(expenseKey, editingExpenses[expenseKey])}
+                              title="Save"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className="btn-expense-cancel"
+                              onClick={() => cancelEditingExpense(expenseKey)}
+                              title="Cancel"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="breakdown-value negative">{formatCurrency(expenseValue)}</span>
+                            <div className="expense-actions">
+                              <button
+                                className="btn-expense-edit"
+                                onClick={() => startEditingExpense(expenseKey)}
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              {!isProtected && (
+                                <button
+                                  className="btn-expense-remove"
+                                  onClick={() => handleRemoveExpense(expenseKey)}
+                                  title="Remove"
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {housingExpenses.mortgage > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Mortgage:</span>
-                      <span className="breakdown-value negative">{formatCurrency(housingExpenses.mortgage)}</span>
-                    </div>
-                  )}
-                  {housingExpenses.utilities > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Utilities:</span>
-                      <span className="breakdown-value negative">{formatCurrency(housingExpenses.utilities)}</span>
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
 
-                <div className="breakdown-category">
+                {/* Add New Expense Section */}
+                <div className="breakdown-category add-expense-section">
                   <div className="breakdown-item category-header">
-                    <span className="breakdown-label">Living Expenses:</span>
-                    <span className="breakdown-value negative">{formatCurrency(livingTotal)}</span>
+                    <span className="breakdown-label">Add New Expense:</span>
                   </div>
-                  {livingExpenses.food > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Food & Groceries:</span>
-                      <span className="breakdown-value negative">{formatCurrency(livingExpenses.food)}</span>
-                    </div>
-                  )}
-                  {livingExpenses.transportation > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Transportation:</span>
-                      <span className="breakdown-value negative">{formatCurrency(livingExpenses.transportation)}</span>
-                    </div>
-                  )}
-                  {livingExpenses.entertainment > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Entertainment:</span>
-                      <span className="breakdown-value negative">{formatCurrency(livingExpenses.entertainment)}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="breakdown-category">
-                  <div className="breakdown-item category-header">
-                    <span className="breakdown-label">Financial & Other:</span>
-                    <span className="breakdown-value negative">{formatCurrency(financialTotal)}</span>
+                  <div className="add-expense-controls">
+                    <input
+                      type="text"
+                      className="expense-name-input"
+                      placeholder="Expense name (e.g., Gym Membership)"
+                      value={newExpenseName}
+                      onChange={(e) => setNewExpenseName(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddExpense();
+                        }
+                      }}
+                    />
+                    <input
+                      type="number"
+                      className="expense-amount-input"
+                      placeholder="Amount"
+                      min="0"
+                      step="0.01"
+                      value={newExpenseAmount}
+                      onChange={(e) => setNewExpenseAmount(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddExpense();
+                        }
+                      }}
+                    />
+                    <button
+                      className="btn-expense-add"
+                      onClick={handleAddExpense}
+                    >
+                      Add Expense
+                    </button>
                   </div>
-                  {financialExpenses.insurance > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Insurance:</span>
-                      <span className="breakdown-value negative">{formatCurrency(financialExpenses.insurance)}</span>
-                    </div>
-                  )}
-                  {financialExpenses.other > 0 && (
-                    <div className="breakdown-item sub-item">
-                      <span className="breakdown-label">Other Expenses:</span>
-                      <span className="breakdown-value negative">{formatCurrency(financialExpenses.other)}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="breakdown-category">

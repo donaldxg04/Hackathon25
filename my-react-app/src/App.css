@@ -957,6 +957,155 @@ body {
     border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Expense editing styles */
+.expense-item-editable {
+    position: relative;
+}
+
+.expense-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+.expense-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-expense-edit,
+.btn-expense-remove,
+.btn-expense-save,
+.btn-expense-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #a8d8ea;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+}
+
+.btn-expense-edit:hover {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: #4ade80;
+    color: #4ade80;
+}
+
+.btn-expense-remove:hover {
+    background: rgba(248, 113, 113, 0.2);
+    border-color: #f87171;
+    color: #f87171;
+}
+
+.btn-expense-save:hover {
+    background: rgba(74, 222, 128, 0.3);
+    border-color: #4ade80;
+    color: #4ade80;
+}
+
+.btn-expense-cancel:hover {
+    background: rgba(248, 113, 113, 0.3);
+    border-color: #f87171;
+    color: #f87171;
+}
+
+.expense-edit-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.expense-edit-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 13px;
+    width: 120px;
+    text-align: right;
+}
+
+.expense-edit-input:focus {
+    outline: none;
+    border-color: #4ade80;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.add-expense-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid rgba(74, 222, 128, 0.3);
+}
+
+.add-expense-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.expense-name-input,
+.expense-amount-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 13px;
+    flex: 1;
+    min-width: 150px;
+}
+
+.expense-name-input::placeholder,
+.expense-amount-input::placeholder {
+    color: rgba(168, 216, 234, 0.5);
+}
+
+.expense-name-input:focus,
+.expense-amount-input:focus {
+    outline: none;
+    border-color: #4ade80;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.expense-amount-input {
+    width: 120px;
+    flex: 0 0 120px;
+    text-align: right;
+}
+
+.btn-expense-add {
+    background: rgba(74, 222, 128, 0.2);
+    border: 1px solid #4ade80;
+    border-radius: 4px;
+    color: #4ade80;
+    cursor: pointer;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-expense-add:hover {
+    background: rgba(74, 222, 128, 0.3);
+    transform: translateY(-1px);
+}
+
 .asset-summary {
     margin-top: 16px;
     padding-top: 16px;

@@ -507,6 +507,40 @@ export const GameProvider = ({ children }) => {
     return total;
   }, [gameState.expenses, gameState.player.housingStatus]);
 
+  const updateExpense = useCallback((expenseKey, amount) => {
+    setGameState(prev => ({
+      ...prev,
+      expenses: {
+        ...prev.expenses,
+        [expenseKey]: Math.max(0, amount || 0)
+      }
+    }));
+  }, []);
+
+  const addExpense = useCallback((expenseKey, amount) => {
+    setGameState(prev => ({
+      ...prev,
+      expenses: {
+        ...prev.expenses,
+        [expenseKey]: Math.max(0, amount || 0)
+      }
+    }));
+  }, []);
+
+  const removeExpense = useCallback((expenseKey) => {
+    setGameState(prev => {
+      const newExpenses = { ...prev.expenses };
+      // Don't allow removing rent/mortgage as they're tied to housing status
+      if (expenseKey !== 'rent' && expenseKey !== 'mortgage') {
+        delete newExpenses[expenseKey];
+      }
+      return {
+        ...prev,
+        expenses: newExpenses
+      };
+    });
+  }, []);
+
   // Initialize game with Choice B (Big Tech Data Science role) and player name
   const startGameWithChoiceB = useCallback((playerName) => {
     // Ensure Date object is properly created (not just copied)
@@ -538,6 +572,9 @@ export const GameProvider = ({ children }) => {
     getTotalIncome,
     getTotalExpenses,
     update401kSettings,
+    updateExpense,
+    addExpense,
+    removeExpense,
     hasStarted,
     startGameWithChoiceB
   };
