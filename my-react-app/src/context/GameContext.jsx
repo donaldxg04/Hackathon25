@@ -110,7 +110,9 @@ const choiceBState = {
       checking: 0,
       investments: 0,
       emergencyFund: 0,
-      retirement401k: 0
+      retirement401k: 0,
+      savings: 0,           // General savings account
+      realEstate: 0         // Home equity
     },
     retirement401k: {
       contributionPercent: 0,
@@ -713,6 +715,96 @@ export const GameProvider = ({ children }) => {
     setHasStarted(true);
   }, []);
 
+  // Apply state changes from storyline events
+  const applyEventStateChanges = useCallback((stateChanges) => {
+    if (!stateChanges) return;
+
+    setGameState(prev => {
+      let newState = { ...prev };
+      const newAllocation = { ...prev.finance.assetAllocation };
+
+      // Initialize savings and realEstate if they don't exist
+      if (newAllocation.savings === undefined) {
+        newAllocation.savings = 0;
+      }
+      if (newAllocation.realEstate === undefined) {
+        newAllocation.realEstate = 0;
+      }
+
+      // Apply financial account changes
+      if (stateChanges.checking !== undefined) {
+        newAllocation.checking = (newAllocation.checking || 0) + stateChanges.checking;
+      }
+      if (stateChanges.emergencyFund !== undefined) {
+        newAllocation.emergencyFund = (newAllocation.emergencyFund || 0) + stateChanges.emergencyFund;
+      }
+      if (stateChanges.savings !== undefined) {
+        newAllocation.savings = (newAllocation.savings || 0) + stateChanges.savings;
+      }
+      if (stateChanges.investments !== undefined) {
+        newAllocation.investments = (newAllocation.investments || 0) + stateChanges.investments;
+      }
+      if (stateChanges.realEstate !== undefined) {
+        newAllocation.realEstate = (newAllocation.realEstate || 0) + stateChanges.realEstate;
+      }
+
+      // Apply percentage change to investments
+      if (stateChanges.investmentsPercent !== undefined) {
+        const currentInvestments = newAllocation.investments || 0;
+        const percentChange = stateChanges.investmentsPercent / 100;
+        newAllocation.investments = currentInvestments * (1 + percentChange);
+      }
+
+      // Update asset allocation
+      newState.finance = {
+        ...newState.finance,
+        assetAllocation: newAllocation
+      };
+
+      // Apply salary changes
+      if (stateChanges.salaryPercent !== undefined) {
+        const currentSalary = newState.income.salary;
+        const percentIncrease = stateChanges.salaryPercent / 100;
+        newState.income = {
+          ...newState.income,
+          salary: currentSalary * (1 + percentIncrease)
+        };
+      }
+      if (stateChanges.salaryFlat !== undefined) {
+        newState.income = {
+          ...newState.income,
+          salary: newState.income.salary + stateChanges.salaryFlat
+        };
+      }
+
+      // Apply rent changes
+      if (stateChanges.rent !== undefined) {
+        newState.expenses = {
+          ...newState.expenses,
+          rent: newState.expenses.rent + stateChanges.rent
+        };
+      }
+
+      // Apply stat changes (health, stress, happiness)
+      const newStats = { ...newState.stats };
+      if (stateChanges.health !== undefined) {
+        newStats.health = clampStat(newStats.health + stateChanges.health);
+      }
+      if (stateChanges.stress !== undefined) {
+        newStats.stress = clampStat(newStats.stress + stateChanges.stress);
+      }
+      if (stateChanges.happiness !== undefined) {
+        newStats.happiness = clampStat(newStats.happiness + stateChanges.happiness);
+      }
+      newState.stats = newStats;
+
+      return newState;
+    });
+
+    // Recalculate net worth after all changes
+    recalculateNetWorth();
+  }, [recalculateNetWorth]);
+
   const value = {
     gameState,
     gameSpeed,
@@ -733,7 +825,8 @@ export const GameProvider = ({ children }) => {
     addExpense,
     removeExpense,
     hasStarted,
-    startGameWithChoiceB
+    startGameWithChoiceB,
+    applyEventStateChanges
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

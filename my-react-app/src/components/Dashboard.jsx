@@ -8,61 +8,15 @@ import NetWorthModal from './NetWorthModal';
 import AssetAllocationModal from './AssetAllocationModal';
 import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
+import { shouldTriggerEvent } from '../data/storyline';
 
 
 
 const Dashboard = () => {
   const { gameState, formatDate, advanceDay, gameSpeed, setGameSpeed } = useGame();
   const [activeModal, setActiveModal] = useState(null);
-  const [shownMonths, setShownMonths] = useState(new Set()); // Track which month-years have triggered
-
-  // Define trigger months: {month: 1-12, year: YYYY}
-  const triggerMonths = [
-    { month: 2, year: 2009 },
-    { month: 5, year: 2009 },
-    { month: 9, year: 2009 },
-    { month: 12, year: 2009 },
-    { month: 1, year: 2010 },
-    { month: 6, year: 2010 },
-    { month: 10, year: 2010 },
-    { month: 3, year: 2011 },
-    { month: 4, year: 2011 },
-    { month: 7, year: 2011 },
-    { month: 9, year: 2011 },
-    { month: 11, year: 2011 },
-    { month: 1, year: 2012 },
-    { month: 2, year: 2012 },
-    { month: 4, year: 2012 },
-    { month: 8, year: 2012 },
-    { month: 4, year: 2013 },
-    { month: 7, year: 2013 },
-    { month: 9, year: 2013 },
-    { month: 12, year: 2013 },
-    { month: 3, year: 2014 },
-    { month: 8, year: 2014 },
-    { month: 10, year: 2014 },
-    { month: 1, year: 2015 },
-    { month: 5, year: 2015 },
-    { month: 7, year: 2015 },
-    { month: 9, year: 2015 },
-    { month: 12, year: 2015 },
-    { month: 2, year: 2016 },
-    { month: 6, year: 2016 },
-    { month: 9, year: 2016 },
-    { month: 11, year: 2016 },
-    { month: 3, year: 2017 },
-    { month: 7, year: 2017 },
-    { month: 11, year: 2017 },
-    { month: 1, year: 2018 },
-    { month: 4, year: 2018 },
-    { month: 6, year: 2018 },
-    { month: 9, year: 2018 },
-    { month: 12, year: 2018 },
-    { month: 2, year: 2019 },
-    { month: 5, year: 2019 },
-    { month: 8, year: 2019 },
-    { month: 10, year: 2019 }
-  ];
+  const [shownEventKeys, setShownEventKeys] = useState(new Set()); // Track which events have been shown
+  const [currentEvent, setCurrentEvent] = useState(null); // Current event to display in modal
 
   const openModal = (modalId) => {
     setActiveModal(modalId);
@@ -74,22 +28,12 @@ const Dashboard = () => {
     document.body.style.overflow = '';
   };
 
-  // Helper function to create a month-year string key for comparison
-  const getMonthYearKey = (date) => {
-    return `${date.getFullYear()}-${date.getMonth() + 1}`;
-  };
-
   // Auto-advance timeline based on game speed (paused when decision modal is open)
   useEffect(() => {
     if (gameSpeed === 0 || activeModal === 'decision') return; // Paused or decision modal open
 
     // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed (5 days/sec)
     const interval = gameSpeed === 1 ? 1000 : 200;
-
-    // Log game speed for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Game speed set to: ${gameSpeed}x (interval: ${interval}ms per day)`);
-    }
 
     const timer = setInterval(() => {
       advanceDay(); // Advances currentDate by 1 day and updates all stock prices
@@ -98,30 +42,26 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, [gameSpeed, advanceDay, activeModal]);
 
-  // Check for decision modal triggers
+  // Check for storyline event triggers
   useEffect(() => {
     if (!gameState?.currentDate) return; // Safety check
-    
+
     const currentDate = gameState.currentDate;
     // Ensure currentDate is a valid Date object
     if (!(currentDate instanceof Date) || isNaN(currentDate.getTime())) return;
-    
-    const currentMonthYearKey = getMonthYearKey(currentDate);
-    
-    // Check if current month and year matches any trigger month
-    const matchesTrigger = triggerMonths.some(trigger => {
-      return currentDate.getFullYear() === trigger.year &&
-             currentDate.getMonth() + 1 === trigger.month;
-    });
 
-    // Show modal if it matches a trigger month and hasn't been shown for this month yet
-    if (matchesTrigger && !shownMonths.has(currentMonthYearKey) && activeModal === null) {
+    // Check if an event should trigger on this date
+    const { shouldTrigger, event, eventKey } = shouldTriggerEvent(currentDate, shownEventKeys);
+
+    // Show modal if we have a new event and no modal is currently open
+    if (shouldTrigger && event && activeModal === null) {
       // Pause the game when decision modal opens
       setGameSpeed(0);
+      setCurrentEvent(event);
       openModal('decision');
-      setShownMonths(prev => new Set([...prev, currentMonthYearKey]));
+      setShownEventKeys(prev => new Set([...prev, eventKey]));
     }
-  }, [gameState.currentDate, shownMonths, activeModal, setGameSpeed]);
+  }, [gameState.currentDate, shownEventKeys, activeModal, setGameSpeed]);
 
   return (
     <div className="dashboard-container">
@@ -172,7 +112,7 @@ const Dashboard = () => {
       </div>
 
       {/* Modals */}
-      {activeModal === 'decision' && <DecisionModal onClose={closeModal} />}
+      {activeModal === 'decision' && <DecisionModal onClose={closeModal} event={currentEvent} />}
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}
