@@ -40,30 +40,20 @@ const InvestingModal = ({ onClose }) => {
   };
 
   // Parse CSV date string (handles both "1/1/2008" and "2008-01-02" formats)
-  // Normalizes to midnight local time to avoid timezone issues
   const parseCSVDate = (dateString) => {
     try {
       if (typeof dateString === 'string') {
-        // Handle ISO format (YYYY-MM-DD) - parse components to avoid timezone issues
+        // Handle ISO format (YYYY-MM-DD)
         if (dateString.includes('-') && dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
-          const [year, month, day] = dateString.split('-').map(Number);
-          const date = new Date(year, month - 1, day);
-          date.setHours(0, 0, 0, 0); // Normalize to midnight local time
-          return date;
+          return new Date(dateString);
         }
         // Handle M/D/YYYY format
         if (dateString.includes('/')) {
           const [month, day, year] = dateString.split('/').map(Number);
-          const date = new Date(year, month - 1, day);
-          date.setHours(0, 0, 0, 0); // Normalize to midnight local time
-          return date;
+          return new Date(year, month - 1, day);
         }
       }
-      const date = new Date(dateString);
-      if (!isNaN(date.getTime())) {
-        date.setHours(0, 0, 0, 0); // Normalize to midnight local time
-      }
-      return date;
+      return new Date(dateString);
     } catch (error) {
       return null;
     }
@@ -99,11 +89,8 @@ const InvestingModal = ({ onClose }) => {
       
       // Filter entries where oneYearAgo <= date <= currentDate
       filtered[symbol] = symbolData.filter(item => {
-        // Check both dateString and date fields
-        const dateStr = item.dateString || (item.date && typeof item.date === 'string' ? item.date : null);
-        if (!dateStr && !(item.date instanceof Date)) return false;
-        
-        const itemDate = dateStr ? parseCSVDate(dateStr) : (item.date instanceof Date ? item.date : null);
+        if (!item.date) return false;
+        const itemDate = parseCSVDate(item.date);
         if (!itemDate || isNaN(itemDate.getTime())) return false;
         
         // Set time to start of day for comparison
@@ -111,99 +98,18 @@ const InvestingModal = ({ onClose }) => {
         itemDateStart.setHours(0, 0, 0, 0);
         
         return itemDateStart >= oneYearAgo && itemDateStart <= currentDateStart;
-      }).sort((a, b) => {
-        // Sort by date to ensure chronological order
-        const dateA = parseCSVDate(a.dateString || a.date);
-        const dateB = parseCSVDate(b.dateString || b.date);
-        if (!dateA || !dateB) return 0;
-        return dateA.getTime() - dateB.getTime();
       });
     });
     
     return filtered;
   };
 
-  // Helper function to format date as YYYY-MM-DD for comparison
-  // Normalizes date to midnight local time to avoid timezone issues
-  const formatDateToString = (date) => {
-    if (!date) return null;
-    let d;
-    if (date instanceof Date) {
-      d = new Date(date);
-    } else if (typeof date === 'string') {
-      // If it's already in YYYY-MM-DD format, return as-is
-      if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return date;
-      }
-      d = parseCSVDate(date);
-    } else {
-      d = new Date(date);
-    }
-    if (!d || isNaN(d.getTime())) return null;
-    // Normalize to midnight local time
-    d.setHours(0, 0, 0, 0);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   // Calculate technical indicators
-  const calculateTechnicalIndicators = (prices, currentGameDate) => {
+  const calculateTechnicalIndicators = (prices) => {
     if (!prices || prices.length < 2) return null;
 
-    // Find the price for the exact current date, or the most recent available price
-    let currentPrice = null;
-    if (currentGameDate) {
-      const gameDate = currentGameDate instanceof Date 
-        ? currentGameDate 
-        : new Date(currentGameDate);
-      const gameDateStr = formatDateToString(gameDate);
-      
-      if (gameDateStr) {
-        // Find the most recent price up to the current date
-        // Sort prices by date to ensure we're checking in order
-        const sortedPrices = [...prices].sort((a, b) => {
-          const dateA = parseCSVDate(a.dateString || a.date);
-          const dateB = parseCSVDate(b.dateString || b.date);
-          if (!dateA || !dateB) return 0;
-          return dateA.getTime() - dateB.getTime();
-        });
-        
-        // Find the most recent price that is <= current date
-        for (let i = sortedPrices.length - 1; i >= 0; i--) {
-          const item = sortedPrices[i];
-          const dateStr = item.dateString || (item.date && typeof item.date === 'string' ? item.date : null);
-          if (dateStr && item.value !== null && item.value !== undefined) {
-            const itemDate = parseCSVDate(dateStr);
-            if (itemDate && !isNaN(itemDate.getTime())) {
-              const itemDateStr = formatDateToString(itemDate);
-              if (itemDateStr && itemDateStr <= gameDateStr) {
-                currentPrice = item.value;
-                break;
-              }
-            }
-          } else if (item.date instanceof Date) {
-            // Handle Date objects directly
-            const itemDateStr = formatDateToString(item.date);
-            if (itemDateStr && itemDateStr <= gameDateStr && item.value !== null && item.value !== undefined) {
-              currentPrice = item.value;
-              break;
-            }
-          }
-        }
-      }
-    }
-    
-    // Fallback to last price if we couldn't find one
-    if (currentPrice === null) {
-      const priceValues = prices.map(p => p.value).filter(p => p !== null && p !== undefined);
-      currentPrice = priceValues.length > 0 ? priceValues[priceValues.length - 1] : null;
-    }
-    
-    if (currentPrice === null) return null;
-
-    const priceValues = prices.map(p => p.value).filter(p => p !== null && p !== undefined);
+    const priceValues = prices.map(p => p.value);
+    const currentPrice = priceValues[priceValues.length - 1];
     const firstPrice = priceValues[0];
 
     // Simple Moving Average (SMA) - 50 period
@@ -292,35 +198,24 @@ const InvestingModal = ({ onClose }) => {
   };
 
   // Load technical insights from CSV data, filtered by game date
-  // This effect runs whenever currentDate changes (daily)
   useEffect(() => {
     if (window.stockDataFromCSV && gameState?.currentDate) {
-      // Normalize game date to ensure consistent comparison
-      const gameDate = gameState.currentDate instanceof Date 
-        ? new Date(gameState.currentDate)
-        : new Date(gameState.currentDate);
-      gameDate.setHours(0, 0, 0, 0);
-      
       // Filter data to only include entries up to one year before current game date
-      const filteredData = filterDataByGameDate(window.stockDataFromCSV, gameDate);
+      const filteredData = filterDataByGameDate(window.stockDataFromCSV, gameState.currentDate);
       
       const insights = {};
       Object.keys(filteredData).forEach(symbol => {
         const prices = filteredData[symbol];
         if (prices && prices.length > 0) {
-          const indicators = calculateTechnicalIndicators(prices, gameDate);
+          const indicators = calculateTechnicalIndicators(prices);
           if (indicators) {
             insights[symbol] = indicators;
           }
         }
       });
       setTechnicalInsights(insights);
-      
-      // Debug logging to verify daily updates
-      const currentDateStr = formatDateToString(gameDate);
-      console.log(`[InvestingModal] Updated insights for date: ${currentDateStr}`, Object.keys(insights));
     }
-  }, [gameState?.currentDate?.getTime(), gameState?.currentDate]);
+  }, [gameState?.currentDate]);
 
   // Update selected stock insights when symbol changes
   useEffect(() => {
@@ -419,7 +314,7 @@ const InvestingModal = ({ onClose }) => {
   return (
     <div className="modal active">
       <div className="modal-backdrop" onClick={onClose}></div>
-      <div className="modal-content modal-large">
+      <div className="modal-content modal-fullscreen">
         <div className="modal-header">
           <h2>Investing Portfolio & Technical Analysis</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>

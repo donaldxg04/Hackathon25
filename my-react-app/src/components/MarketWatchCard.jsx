@@ -257,7 +257,7 @@ const MarketWatchCard = ({ onClick }) => {
     
     // Log when MarketWatchCard updates for a new date
     if (process.env.NODE_ENV === 'development') {
-      console.log('MarketWatchCard: Updating for date:', currentDate.toDateString());
+      console.log('MarketWatchCard: Updating stock prices for date:', currentDate.toDateString());
     }
     
     const stockData = window.stockDataFromCSV || csvStockData;
@@ -276,6 +276,7 @@ const MarketWatchCard = ({ onClick }) => {
       const symbol = position.symbol;
       const symbolData = stockData?.[symbol];
       
+      // Get price for current date, or use most recent previous date if missing
       const currentPriceFromCSV = symbolData
         ? getPriceForDate(symbolData, currentDate)
         : null;
