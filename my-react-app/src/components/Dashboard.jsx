@@ -67,6 +67,56 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {/* FinLife Logo */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '12px 20px',
+        background: 'linear-gradient(135deg, #4ade80 0%, #3b82f6 100%)',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(74, 222, 128, 0.3)',
+        zIndex: 100,
+        border: '2px solid rgba(255, 255, 255, 0.2)',
+        cursor: 'default',
+        userSelect: 'none'
+      }}>
+        <span style={{
+          fontSize: '24px',
+          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+        }}>
+          💰
+        </span>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start'
+        }}>
+          <span style={{
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: 'white',
+            letterSpacing: '0.5px',
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+          }}>
+            FinLife
+          </span>
+          <span style={{
+            fontSize: '9px',
+            color: 'rgba(255, 255, 255, 0.9)',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            fontWeight: '600'
+          }}>
+            Financial Literacy
+          </span>
+        </div>
+      </div>
+      
       {/* Left Column */}
       <div className="left-column">
         <NetWorthCard onClick={() => openModal('netWorth')} />
