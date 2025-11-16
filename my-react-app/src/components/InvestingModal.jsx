@@ -29,6 +29,9 @@ const InvestingModal = ({ onClose }) => {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [technicalInsights, setTechnicalInsights] = useState({});
   const [selectedStockInsights, setSelectedStockInsights] = useState(null);
+  const [showInfoChart, setShowInfoChart] = useState(false);
+  const [showInfoTechnical, setShowInfoTechnical] = useState(false);
+  const [showInfoTrading, setShowInfoTrading] = useState(false);
 
   // Get current game date month
   const getCurrentMonth = () => {
@@ -768,7 +771,68 @@ const InvestingModal = ({ onClose }) => {
                 backgroundColor: 'rgba(255, 255, 255, 0.03)',
                 borderRadius: '8px'
               }}>
-                <h3 style={{ color: '#a8d8ea', marginBottom: '15px', fontSize: '14px' }}>Stock Price Chart</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  <h3 style={{ color: '#a8d8ea', margin: 0, fontSize: '14px' }}>Stock Price Chart</h3>
+                  <button 
+                    className="info-button"
+                    onClick={() => setShowInfoChart(!showInfoChart)}
+                    title="Learn about stock charts"
+                    style={{
+                      background: '#3b82f6',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '22px',
+                      height: '22px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#2563eb'}
+                    onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
+                  >
+                    i
+                  </button>
+                </div>
+                
+                {showInfoChart && (
+                  <div style={{
+                    marginBottom: '15px',
+                    padding: '12px',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderLeft: '3px solid #3b82f6',
+                    borderRadius: '6px'
+                  }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '12px', lineHeight: '1.6', color: '#a8d8ea' }}>
+                      Stock price charts show historical price movements over time. They help you identify trends, patterns, 
+                      and price levels that can inform your investment decisions. Look for upward trends (bullish) or downward 
+                      trends (bearish) to understand market sentiment.
+                    </p>
+                    <a 
+                      href="https://www.troweprice.com/personal-investing/resources/insights/market-volatility-explained-five-charts-for-better-insight.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#4ade80',
+                        textDecoration: 'none',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}
+                      onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                      onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                    >
+                      Learn more at T. Rowe Price →
+                    </a>
+                  </div>
+                )}
+                
                 <div style={{ 
                   height: '500px', 
                   width: '100%',
@@ -795,7 +859,67 @@ const InvestingModal = ({ onClose }) => {
               borderRadius: '8px',
               border: '1px solid rgba(74, 222, 128, 0.3)'
             }}>
-              <h3 style={{ color: '#4ade80', marginBottom: '15px' }}>Technical Analysis: {stockSymbol}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                <h3 style={{ color: '#4ade80', margin: 0 }}>Technical Analysis: {stockSymbol}</h3>
+                <button 
+                  className="info-button"
+                  onClick={() => setShowInfoTechnical(!showInfoTechnical)}
+                  title="Learn about technical analysis"
+                  style={{
+                    background: '#3b82f6',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '22px',
+                    height: '22px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#2563eb'}
+                  onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
+                >
+                  i
+                </button>
+              </div>
+              
+              {showInfoTechnical && (
+                <div style={{
+                  marginBottom: '15px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderLeft: '3px solid #3b82f6',
+                  borderRadius: '6px'
+                }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '12px', lineHeight: '1.6', color: '#a8d8ea' }}>
+                    Technical analysis uses statistical indicators like RSI (Relative Strength Index), moving averages, 
+                    and momentum to evaluate securities. RSI above 70 suggests overbought conditions, while below 30 suggests 
+                    oversold. SMA (Simple Moving Average) helps identify trends and potential support/resistance levels.
+                  </p>
+                  <a 
+                    href="https://www.investopedia.com/articles/active-trading/102914/technical-analysis-strategies-beginners.asp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#4ade80',
+                      textDecoration: 'none',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                    onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                  >
+                    Learn more at Investopedia →
+                  </a>
+                </div>
+              )}
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                 {/* Price Information */}
@@ -969,7 +1093,88 @@ const InvestingModal = ({ onClose }) => {
           </div>
 
           <div className="trading-interface" style={{ marginTop: '20px' }}>
-            <h3>Buy / Sell Stocks</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0 }}>Buy / Sell Stocks</h3>
+              <button 
+                className="info-button"
+                onClick={() => setShowInfoTrading(!showInfoTrading)}
+                title="Learn about buying and selling stocks"
+                style={{
+                  background: '#3b82f6',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '22px',
+                  height: '22px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
+              >
+                i
+              </button>
+            </div>
+            
+            {showInfoTrading && (
+              <div style={{
+                marginBottom: '15px',
+                padding: '12px',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderLeft: '3px solid #3b82f6',
+                borderRadius: '6px'
+              }}>
+                <p style={{ margin: '0 0 12px 0', fontSize: '12px', lineHeight: '1.6', color: '#a8d8ea' }}>
+                  When you buy stocks, you're purchasing ownership shares in a company. The stock price fluctuates based on 
+                  supply and demand. Buy low and sell high to make a profit. Consider diversifying your portfolio across 
+                  different sectors to manage risk. Always research before investing and never invest more than you can afford to lose.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <a 
+                    href="https://www.troweprice.com/personal-investing/resources/insights/smart-steps-when-saving-for-short-and-long-term-financial-goals.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#4ade80',
+                      textDecoration: 'none',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                    onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                  >
+                    📊 Smart steps when saving for short- and long-term financial goals →
+                  </a>
+                  <a 
+                    href="https://www.troweprice.com/personal-investing/resources/insights/is-it-smart-to-keep-money-invested-in-equities-during-market-volatility.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#4ade80',
+                      textDecoration: 'none',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                    onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                  >
+                    📈 Is it smart to keep money invested during market volatility? →
+                  </a>
+                </div>
+              </div>
+            )}
+            
             <div className="trading-form">
               <div className="form-group">
                 <label htmlFor="stockSymbol">Stock Symbol:</label>

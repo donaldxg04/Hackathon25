@@ -65,6 +65,7 @@ const AssetAllocationModal = ({ onClose }) => {
   const [editingExpenses, setEditingExpenses] = useState({});
   const [newExpenseName, setNewExpenseName] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
+  const [showInfo401k, setShowInfo401k] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -561,7 +562,68 @@ const AssetAllocationModal = ({ onClose }) => {
 
             {/* 401k Retirement Plan Section */}
             <div className="retirement-401k-section">
-              <h3>401k Retirement Plan</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}>401k Retirement Plan</h3>
+                <button 
+                  className="info-button"
+                  onClick={() => setShowInfo401k(!showInfo401k)}
+                  title="Learn about 401k"
+                  style={{
+                    background: '#3b82f6',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#2563eb'}
+                  onMouseLeave={(e) => e.target.style.background = '#3b82f6'}
+                >
+                  i
+                </button>
+              </div>
+              
+              {showInfo401k && (
+                <div style={{
+                  marginBottom: '15px',
+                  padding: '15px',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderLeft: '3px solid #3b82f6',
+                  borderRadius: '6px'
+                }}>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '13px', lineHeight: '1.6', color: '#a8d8ea' }}>
+                    A 401(k) is a retirement savings plan offered by employers. You contribute pre-tax dollars from your paycheck, 
+                    which reduces your taxable income. The money grows tax-deferred until retirement. Many employers offer matching 
+                    contributions, which is essentially free money for your retirement.
+                  </p>
+                  <a 
+                    href="https://www.troweprice.com/personal-investing/accounts/retirement/small-business/solo-401k/index.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#4ade80',
+                      textDecoration: 'none',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                    onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                  >
+                    Learn more at T. Rowe Price →
+                  </a>
+                </div>
+              )}
+              
               <div className="retirement-401k-info">
                 <div className="retirement-401k-balance">
                   <span className="balance-label">Current Balance:</span>
