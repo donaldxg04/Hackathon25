@@ -4,14 +4,18 @@ const ASSET_LABELS = {
   realEstate: 'Real Estate',
   checking: 'Checking Account',
   investments: 'Investments',
-  emergencyFund: 'Emergency Fund'
+  emergencyFund: 'Emergency Fund',
+  retirement401k: '401k Retirement',
+  savings: 'Savings'
 };
 
 const ASSET_COLORS = {
   realEstate: '#3b82f6',
   checking: '#22c55e',
   investments: '#f59e0b',
-  emergencyFund: '#8b5cf6'
+  emergencyFund: '#8b5cf6',
+  retirement401k: '#ec4899',
+  savings: '#06b6d4'
 };
 
 const AssetAllocationCard = ({ onClick }) => {
@@ -50,12 +54,12 @@ const AssetAllocationCard = ({ onClick }) => {
 
   const segments = [];
   for (const key in adjustedAllocation) {
-    if (adjustedAllocation[key] > 0) {
+    if (adjustedAllocation[key] > 0 && ASSET_LABELS[key]) {
       segments.push({
         label: ASSET_LABELS[key],
         value: adjustedAllocation[key],
         percentage: (adjustedAllocation[key] / total) * 100,
-        color: ASSET_COLORS[key],
+        color: ASSET_COLORS[key] || '#888888',
         key
       });
     }

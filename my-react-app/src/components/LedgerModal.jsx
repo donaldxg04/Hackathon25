@@ -3,11 +3,11 @@ import { useGame } from '../context/GameContext';
 
 const LedgerModal = ({ onClose }) => {
   const { gameState, formatDate, formatCurrency } = useGame();
-  const [filter, setFilter] = useState('all'); // 'all', 'decision', 'randomEvent', 'action'
-  
+  const [filter, setFilter] = useState('all'); // 'all', 'decision', 'randomEvent', 'action', 'transaction'
+
   const ledgerEntries = gameState?.ledger || [];
-  const filteredEntries = filter === 'all' 
-    ? ledgerEntries 
+  const filteredEntries = filter === 'all'
+    ? ledgerEntries
     : ledgerEntries.filter(entry => entry.type === filter);
   
   const getFinancialDisplay = (financialChanges) => {
@@ -116,25 +116,31 @@ const LedgerModal = ({ onClose }) => {
         <div className="modal-body">
           {/* Filter Tabs */}
           <div className="ledger-filters">
-            <button 
+            <button
               className={`ledger-filter-btn ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
             >
               All ({ledgerEntries.length})
             </button>
-            <button 
+            <button
+              className={`ledger-filter-btn ${filter === 'transaction' ? 'active' : ''}`}
+              onClick={() => setFilter('transaction')}
+            >
+              Transactions ({ledgerEntries.filter(e => e.type === 'transaction').length})
+            </button>
+            <button
               className={`ledger-filter-btn ${filter === 'decision' ? 'active' : ''}`}
               onClick={() => setFilter('decision')}
             >
               Decisions ({ledgerEntries.filter(e => e.type === 'decision').length})
             </button>
-            <button 
+            <button
               className={`ledger-filter-btn ${filter === 'randomEvent' ? 'active' : ''}`}
               onClick={() => setFilter('randomEvent')}
             >
               Random Events ({ledgerEntries.filter(e => e.type === 'randomEvent').length})
             </button>
-            <button 
+            <button
               className={`ledger-filter-btn ${filter === 'action' ? 'active' : ''}`}
               onClick={() => setFilter('action')}
             >
@@ -154,7 +160,7 @@ const LedgerModal = ({ onClose }) => {
                   <div className="ledger-entry-header">
                     <div className="ledger-entry-icon">
                       <span className="ledger-type-badge">
-                        {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : entry.type === 'action' ? 'ACTION' : 'ENTRY'}
+                        {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : entry.type === 'action' ? 'ACTION' : entry.type === 'transaction' ? 'TRANSACTION' : 'ENTRY'}
                       </span>
                     </div>
                     <div className="ledger-entry-title-section">

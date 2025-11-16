@@ -593,6 +593,7 @@ export const GameProvider = ({ children }) => {
       let newPriceHistory = { ...prev.markets.priceHistory };
       let new401kShares = prev.finance.retirement401k.shares || 0;
       let new401kBalance = prev.finance.retirement401k.balance || 0;
+      let newLedgerEntries = [];
 
       // Calculate 401k contribution (pre-tax, deducted from salary)
       const salary = prev.income.salary;
@@ -603,15 +604,45 @@ export const GameProvider = ({ children }) => {
       if (isFirstOfMonth || isFourteenthOfMonth) {
         const halfNetSalary = (salary - monthly401kContribution) / 2;
         newAllocation.checking += halfNetSalary;
-        
-        // Add 401k contribution for this pay period (half month)
+
+        // Add ledger entry for paycheck
         const half401kContribution = monthly401kContribution / 2;
+        const paycheckEntry = {
+          id: Date.now() + Math.random(),
+          timestamp: new Date(newDate),
+          type: 'transaction',
+          title: 'Paycheck Received',
+          description: half401kContribution > 0
+            ? `Bi-monthly paycheck deposited (${formatCurrency(halfNetSalary)} after ${formatCurrency(half401kContribution)} 401k contribution)`
+            : `Bi-monthly paycheck deposited`,
+          financialChanges: {
+            checking: halfNetSalary
+          },
+          date: formatDate(newDate)
+        };
+        newLedgerEntries.push(paycheckEntry);
+
+        // Add 401k contribution for this pay period (half month)
         const strategy = prev.finance.retirement401k.strategy;
         if (half401kContribution > 0 && strategy) {
           const strategyPosition = newPositions.find(p => p.symbol === strategy);
           if (strategyPosition) {
             const sharesToAdd = half401kContribution / strategyPosition.price;
             new401kShares += sharesToAdd;
+
+            // Add ledger entry for 401k contribution
+            const contribution401kEntry = {
+              id: Date.now() + Math.random() + 0.1,
+              timestamp: new Date(newDate),
+              type: 'transaction',
+              title: '401k Contribution',
+              description: `Automatic contribution: ${formatCurrency(half401kContribution)} invested in ${strategy} (${sharesToAdd.toFixed(2)} shares @ ${formatCurrency(strategyPosition.price)})`,
+              financialChanges: {
+                retirement401k: half401kContribution
+              },
+              date: formatDate(newDate)
+            };
+            newLedgerEntries.push(contribution401kEntry);
           }
         }
       }
@@ -621,27 +652,108 @@ export const GameProvider = ({ children }) => {
         // Pay rent or mortgage
         if (prev.player.housingStatus === 'renting') {
           newAllocation.checking -= prev.expenses.rent;
+          // Add ledger entry for rent payment
+          const rentEntry = {
+            id: Date.now() + Math.random() + 0.2,
+            timestamp: new Date(newDate),
+            type: 'transaction',
+            title: 'Rent Payment',
+            description: `Monthly rent payment`,
+            financialChanges: {
+              checking: -prev.expenses.rent
+            },
+            date: formatDate(newDate)
+          };
+          newLedgerEntries.push(rentEntry);
         } else if (prev.player.housingStatus === 'owner') {
           newAllocation.checking -= prev.expenses.mortgage;
+          // Add ledger entry for mortgage payment
+          const mortgageEntry = {
+            id: Date.now() + Math.random() + 0.2,
+            timestamp: new Date(newDate),
+            type: 'transaction',
+            title: 'Mortgage Payment',
+            description: `Monthly mortgage payment`,
+            financialChanges: {
+              checking: -prev.expenses.mortgage
+            },
+            date: formatDate(newDate)
+          };
+          newLedgerEntries.push(mortgageEntry);
         }
 
         // Pay utilities
         newAllocation.checking -= prev.expenses.utilities;
+        // Add ledger entry for utilities payment
+        const utilitiesEntry = {
+          id: Date.now() + Math.random() + 0.3,
+          timestamp: new Date(newDate),
+          type: 'transaction',
+          title: 'Utilities Payment',
+          description: `Monthly utilities payment`,
+          financialChanges: {
+            checking: -prev.expenses.utilities
+          },
+          date: formatDate(newDate)
+        };
+        newLedgerEntries.push(utilitiesEntry);
 
         // Apply overdraft fee if checking went negative
         const OVERDRAFT_FEE = 35;
-        if (newAllocation.checking < 0 && prev.finance.assetAllocation.checking >= 0) {
+        const previousChecking = prev.finance.assetAllocation.checking + (isFirstOfMonth || isFourteenthOfMonth ? (salary - monthly401kContribution) / 2 : 0);
+        if (newAllocation.checking < 0 && previousChecking >= 0) {
           // Just went into overdraft
           newAllocation.checking -= OVERDRAFT_FEE;
-        } else if (newAllocation.checking < 0 && prev.finance.assetAllocation.checking < 0) {
+          // Add ledger entry for overdraft fee
+          const overdraftEntry = {
+            id: Date.now() + Math.random() + 0.4,
+            timestamp: new Date(newDate),
+            type: 'transaction',
+            title: 'Overdraft Fee',
+            description: `Account overdraft fee charged`,
+            financialChanges: {
+              checking: -OVERDRAFT_FEE
+            },
+            date: formatDate(newDate)
+          };
+          newLedgerEntries.push(overdraftEntry);
+        } else if (newAllocation.checking < 0 && previousChecking < 0) {
           // Already in overdraft, apply fee again
           newAllocation.checking -= OVERDRAFT_FEE;
+          // Add ledger entry for overdraft fee
+          const overdraftEntry = {
+            id: Date.now() + Math.random() + 0.4,
+            timestamp: new Date(newDate),
+            type: 'transaction',
+            title: 'Overdraft Fee',
+            description: `Account overdraft fee charged (continued overdraft)`,
+            financialChanges: {
+              checking: -OVERDRAFT_FEE
+            },
+            date: formatDate(newDate)
+          };
+          newLedgerEntries.push(overdraftEntry);
         }
 
         // Apply monthly emergency fund interest on 1st of month
         const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
         const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
-        newAllocation.emergencyFund += emergencyFundInterest;
+        if (emergencyFundInterest > 0) {
+          newAllocation.emergencyFund += emergencyFundInterest;
+          // Add ledger entry for interest
+          const interestEntry = {
+            id: Date.now() + Math.random() + 0.5,
+            timestamp: new Date(newDate),
+            type: 'transaction',
+            title: 'Emergency Fund Interest',
+            description: `Monthly interest earned (2% APY)`,
+            financialChanges: {
+              emergencyFund: emergencyFundInterest
+            },
+            date: formatDate(newDate)
+          };
+          newLedgerEntries.push(interestEntry);
+        }
       }
 
       // Update stock prices EVERY DAY using CSV data (or keep current price if CSV not available)
@@ -749,7 +861,8 @@ export const GameProvider = ({ children }) => {
           ...prev.markets,
           positions: newPositions,
           priceHistory: newPriceHistory
-        }
+        },
+        ledger: [...prev.ledger, ...newLedgerEntries]
       };
     });
   }, [csvStockData]);

@@ -20,7 +20,7 @@ const LedgerCard = ({ onClick }) => {
               <div key={entry.id} className="ledger-preview-item">
                 <div className="ledger-preview-type">
                   <span className="ledger-type-label">
-                    {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : entry.type === 'action' ? 'ACTION' : 'ENTRY'}
+                    {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : entry.type === 'action' ? 'ACTION' : entry.type === 'transaction' ? 'TRANSACTION' : 'ENTRY'}
                   </span>
                 </div>
                 <div className="ledger-preview-text">

@@ -74,8 +74,8 @@ const Dashboard = () => {
         right: '20px',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
-        padding: '12px 20px',
+        gap: '6px',
+        padding: '10px 16px',
         background: 'linear-gradient(135deg, #4ade80 0%, #3b82f6 100%)',
         borderRadius: '12px',
         boxShadow: '0 4px 12px rgba(74, 222, 128, 0.3)',
@@ -85,7 +85,7 @@ const Dashboard = () => {
         userSelect: 'none'
       }}>
         <span style={{
-          fontSize: '24px',
+          fontSize: '20px',
           filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
         }}>
           💰
@@ -96,7 +96,7 @@ const Dashboard = () => {
           alignItems: 'flex-start'
         }}>
           <span style={{
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: 'bold',
             color: 'white',
             letterSpacing: '0.5px',
@@ -106,7 +106,7 @@ const Dashboard = () => {
             FinLife
           </span>
           <span style={{
-            fontSize: '9px',
+            fontSize: '8px',
             color: 'rgba(255, 255, 255, 0.9)',
             textTransform: 'uppercase',
             letterSpacing: '1px',

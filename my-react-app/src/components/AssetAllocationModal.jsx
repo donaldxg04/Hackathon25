@@ -175,7 +175,9 @@ const AssetAllocationModal = ({ onClose }) => {
 
   // Calculate detailed income breakdown with taxes and deductions
   const grossSalary = gameState.income.salary;
-  const otherIncome = (gameState.income.investments || 0) + (gameState.income.other || 0);
+  const investmentIncome = gameState.income.investments || 0;
+  const sideGigIncome = gameState.income.other || 0;
+  const otherIncome = investmentIncome + sideGigIncome;
   const preTax401k = monthly401kContribution;
   const taxableIncome = grossSalary - preTax401k;
   
@@ -326,22 +328,22 @@ const AssetAllocationModal = ({ onClose }) => {
                     <span className="breakdown-label">Salary:</span>
                     <span className="breakdown-value positive">{formatCurrency(grossSalary)}</span>
                   </div>
-                  {otherIncome > 0 && (
-                    <>
-                      {gameState.income.investments > 0 && (
-                        <div className="breakdown-item sub-item">
-                          <span className="breakdown-label">Investment Income:</span>
-                          <span className="breakdown-value positive">{formatCurrency(gameState.income.investments)}</span>
-                        </div>
-                      )}
-                      {gameState.income.other > 0 && (
-                        <div className="breakdown-item sub-item">
-                          <span className="breakdown-label">Other Income:</span>
-                          <span className="breakdown-value positive">{formatCurrency(gameState.income.other)}</span>
-                        </div>
-                      )}
-                    </>
+                  {sideGigIncome > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Side Gig / Other Income:</span>
+                      <span className="breakdown-value positive">{formatCurrency(sideGigIncome)}</span>
+                    </div>
                   )}
+                  {investmentIncome > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Investment Income:</span>
+                      <span className="breakdown-value positive">{formatCurrency(investmentIncome)}</span>
+                    </div>
+                  )}
+                  <div className="breakdown-item total-item">
+                    <span className="breakdown-label">Total Gross Income:</span>
+                    <span className="breakdown-value positive">{formatCurrency(grossSalary + otherIncome)}</span>
+                  </div>
                 </div>
 
                 <div className="breakdown-category">
@@ -411,14 +413,236 @@ const AssetAllocationModal = ({ onClose }) => {
             <div className="breakdown-section detailed-section">
               <h3>Expenses Breakdown</h3>
               <div className="breakdown-list">
-                {/* Render all expenses with edit/remove functionality */}
+                {/* Housing Expenses Category */}
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Housing ({formatCurrency(housingTotal)}):</span>
+                  </div>
+                  {Object.entries(housingExpenses).map(([expenseKey, expenseValue]) => {
+                    if (expenseValue === 0) return null;
+                    const isEditing = editingExpenses.hasOwnProperty(expenseKey);
+                    const expenseLabel = EXPENSE_LABELS[expenseKey] || expenseKey.charAt(0).toUpperCase() + expenseKey.slice(1).replace(/_/g, ' ');
+                    const isProtected = expenseKey === 'rent' || expenseKey === 'mortgage';
+
+                    return (
+                      <div key={expenseKey} className="breakdown-item sub-item expense-item-editable">
+                        <div className="expense-item-content">
+                          <span className="breakdown-label">{expenseLabel}:</span>
+                          {isEditing ? (
+                            <div className="expense-edit-controls">
+                              <input
+                                type="number"
+                                className="expense-edit-input"
+                                min="0"
+                                step="0.01"
+                                value={editingExpenses[expenseKey]}
+                                onChange={(e) => setEditingExpenses(prev => ({
+                                  ...prev,
+                                  [expenseKey]: parseFloat(e.target.value) || 0
+                                }))}
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleExpenseChange(expenseKey, editingExpenses[expenseKey]);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditingExpense(expenseKey);
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                className="btn-expense-save"
+                                onClick={() => handleExpenseChange(expenseKey, editingExpenses[expenseKey])}
+                                title="Save"
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="btn-expense-cancel"
+                                onClick={() => cancelEditingExpense(expenseKey)}
+                                title="Cancel"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="breakdown-value negative">{formatCurrency(expenseValue)}</span>
+                              <div className="expense-actions">
+                                <button
+                                  className="btn-expense-edit"
+                                  onClick={() => startEditingExpense(expenseKey)}
+                                  title="Edit"
+                                >
+                                  Edit
+                                </button>
+                                {!isProtected && (
+                                  <button
+                                    className="btn-expense-remove"
+                                    onClick={() => handleRemoveExpense(expenseKey)}
+                                    title="Remove"
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Living Expenses Category */}
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Living Expenses ({formatCurrency(livingTotal)}):</span>
+                  </div>
+                  {Object.entries(livingExpenses).map(([expenseKey, expenseValue]) => {
+                    if (expenseValue === 0) return null;
+                    const isEditing = editingExpenses.hasOwnProperty(expenseKey);
+                    const expenseLabel = EXPENSE_LABELS[expenseKey] || expenseKey.charAt(0).toUpperCase() + expenseKey.slice(1).replace(/_/g, ' ');
+
+                    return (
+                      <div key={expenseKey} className="breakdown-item sub-item expense-item-editable">
+                        <div className="expense-item-content">
+                          <span className="breakdown-label">{expenseLabel}:</span>
+                          {isEditing ? (
+                            <div className="expense-edit-controls">
+                              <input
+                                type="number"
+                                className="expense-edit-input"
+                                min="0"
+                                step="0.01"
+                                value={editingExpenses[expenseKey]}
+                                onChange={(e) => setEditingExpenses(prev => ({
+                                  ...prev,
+                                  [expenseKey]: parseFloat(e.target.value) || 0
+                                }))}
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleExpenseChange(expenseKey, editingExpenses[expenseKey]);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditingExpense(expenseKey);
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                className="btn-expense-save"
+                                onClick={() => handleExpenseChange(expenseKey, editingExpenses[expenseKey])}
+                                title="Save"
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="btn-expense-cancel"
+                                onClick={() => cancelEditingExpense(expenseKey)}
+                                title="Cancel"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="breakdown-value negative">{formatCurrency(expenseValue)}</span>
+                              <div className="expense-actions">
+                                <button
+                                  className="btn-expense-edit"
+                                  onClick={() => startEditingExpense(expenseKey)}
+                                  title="Edit"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Other Expenses Category */}
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Other Expenses ({formatCurrency(financialTotal)}):</span>
+                  </div>
+                  {Object.entries(financialExpenses).map(([expenseKey, expenseValue]) => {
+                    if (expenseValue === 0) return null;
+                    const isEditing = editingExpenses.hasOwnProperty(expenseKey);
+                    const expenseLabel = EXPENSE_LABELS[expenseKey] || expenseKey.charAt(0).toUpperCase() + expenseKey.slice(1).replace(/_/g, ' ');
+
+                    return (
+                      <div key={expenseKey} className="breakdown-item sub-item expense-item-editable">
+                        <div className="expense-item-content">
+                          <span className="breakdown-label">{expenseLabel}:</span>
+                          {isEditing ? (
+                            <div className="expense-edit-controls">
+                              <input
+                                type="number"
+                                className="expense-edit-input"
+                                min="0"
+                                step="0.01"
+                                value={editingExpenses[expenseKey]}
+                                onChange={(e) => setEditingExpenses(prev => ({
+                                  ...prev,
+                                  [expenseKey]: parseFloat(e.target.value) || 0
+                                }))}
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleExpenseChange(expenseKey, editingExpenses[expenseKey]);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditingExpense(expenseKey);
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                className="btn-expense-save"
+                                onClick={() => handleExpenseChange(expenseKey, editingExpenses[expenseKey])}
+                                title="Save"
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="btn-expense-cancel"
+                                onClick={() => cancelEditingExpense(expenseKey)}
+                                title="Cancel"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="breakdown-value negative">{formatCurrency(expenseValue)}</span>
+                              <div className="expense-actions">
+                                <button
+                                  className="btn-expense-edit"
+                                  onClick={() => startEditingExpense(expenseKey)}
+                                  title="Edit"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Custom/Additional Expenses */}
                 {Object.entries(gameState.expenses || {}).map(([expenseKey, expenseValue]) => {
-                  // Show all expenses, including zero values, so users can edit them
-                  
+                  // Skip if already shown in categories above
+                  if (['rent', 'mortgage', 'utilities', 'food', 'transportation', 'entertainment', 'insurance', 'other'].includes(expenseKey)) {
+                    return null;
+                  }
+
                   const isEditing = editingExpenses.hasOwnProperty(expenseKey);
                   const expenseLabel = EXPENSE_LABELS[expenseKey] || expenseKey.charAt(0).toUpperCase() + expenseKey.slice(1).replace(/_/g, ' ');
-                  const isProtected = expenseKey === 'rent' || expenseKey === 'mortgage';
-                  
+
                   return (
                     <div key={expenseKey} className="breakdown-item expense-item-editable">
                       <div className="expense-item-content">
@@ -463,14 +687,13 @@ const AssetAllocationModal = ({ onClose }) => {
                           <>
                             <span className="breakdown-value negative">{formatCurrency(expenseValue)}</span>
                             <div className="expense-actions">
-                            <button
-                              className="btn-expense-edit"
-                              onClick={() => startEditingExpense(expenseKey)}
-                              title="Edit"
-                            >
-                              Edit
-                            </button>
-                            {!isProtected && (
+                              <button
+                                className="btn-expense-edit"
+                                onClick={() => startEditingExpense(expenseKey)}
+                                title="Edit"
+                              >
+                                Edit
+                              </button>
                               <button
                                 className="btn-expense-remove"
                                 onClick={() => handleRemoveExpense(expenseKey)}
@@ -478,7 +701,6 @@ const AssetAllocationModal = ({ onClose }) => {
                               >
                                 Remove
                               </button>
-                            )}
                             </div>
                           </>
                         )}
