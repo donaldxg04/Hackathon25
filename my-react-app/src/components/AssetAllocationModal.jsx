@@ -14,14 +14,16 @@ const ASSET_LABELS = {
   realEstate: 'Real Estate',
   checking: 'Checking Account',
   investments: 'Investments',
-  emergencyFund: 'Emergency Fund'
+  emergencyFund: 'Emergency Fund',
+  retirement401k: '401k Retirement'
 };
 
 const ASSET_COLORS = {
   checking: '#22c55e',
   investments: '#f59e0b',
   emergencyFund: '#8b5cf6',
-  realEstate: '#3b82f6'
+  realEstate: '#3b82f6',
+  retirement401k: '#ec4899'
 };
 
 const INCOME_LABELS = {
@@ -42,7 +44,7 @@ const EXPENSE_LABELS = {
 };
 
 const AssetAllocationModal = ({ onClose }) => {
-  const { gameState, formatCurrency, transferFunds, getTotalIncome, getTotalExpenses } = useGame();
+  const { gameState, formatCurrency, transferFunds, getTotalIncome, getTotalExpenses, update401kSettings } = useGame();
 
   // Get available accounts (exclude real estate if renting)
   const availableAccounts = Object.keys(gameState.finance.assetAllocation);
@@ -58,6 +60,8 @@ const AssetAllocationModal = ({ onClose }) => {
   const [toAccount, setToAccount] = useState(availableAccounts[1] || 'investments');
   const [transferAmount, setTransferAmount] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [retirement401kContribution, setRetirement401kContribution] = useState(gameState.finance.retirement401k.contributionPercent);
+  const [retirement401kStrategy, setRetirement401kStrategy] = useState(gameState.finance.retirement401k.strategy);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -90,6 +94,20 @@ const AssetAllocationModal = ({ onClose }) => {
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     }
   };
+
+  const handle401kUpdate = () => {
+    update401kSettings(retirement401kContribution, retirement401kStrategy);
+    setMessage({ text: '401k settings updated successfully.', type: 'success' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+  };
+
+  const indexFunds = [
+    { symbol: 'VOO', name: 'VOO - S&P 500 ETF' },
+    { symbol: 'VTI', name: 'VTI - Total Stock Market ETF' },
+    { symbol: 'VXUS', name: 'VXUS - International Stock ETF' }
+  ];
+
+  const monthly401kContribution = gameState.income.salary * (retirement401kContribution / 100);
 
   const totalIncome = getTotalIncome();
   const totalExpenses = getTotalExpenses();
@@ -255,6 +273,65 @@ const AssetAllocationModal = ({ onClose }) => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* 401k Retirement Plan Section */}
+            <div className="retirement-401k-section">
+              <h3>401k Retirement Plan</h3>
+              <div className="retirement-401k-info">
+                <div className="retirement-401k-balance">
+                  <span className="balance-label">Current Balance:</span>
+                  <span className="balance-value positive">
+                    {formatCurrency(gameState.finance.assetAllocation.retirement401k || 0)}
+                  </span>
+                </div>
+                <div className="retirement-401k-contribution">
+                  <span className="balance-label">Monthly Contribution:</span>
+                  <span className="balance-value positive">
+                    {formatCurrency(monthly401kContribution)}
+                  </span>
+                </div>
+                <div className="retirement-401k-strategy">
+                  <span className="balance-label">Current Strategy:</span>
+                  <span className="balance-value">
+                    {gameState.finance.retirement401k.strategy}
+                  </span>
+                </div>
+              </div>
+              <div className="retirement-401k-config">
+                <div className="form-group">
+                  <label htmlFor="retirement401kContribution">Contribution Percentage (0-20%):</label>
+                  <input
+                    type="number"
+                    id="retirement401kContribution"
+                    className="form-control"
+                    min="0"
+                    max="20"
+                    step="0.5"
+                    value={retirement401kContribution}
+                    onChange={(e) => setRetirement401kContribution(parseFloat(e.target.value) || 0)}
+                  />
+                  <span className="form-hint">
+                    {retirement401kContribution > 0 && `${formatCurrency(monthly401kContribution)} per month from salary`}
+                  </span>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="retirement401kStrategy">Investment Strategy:</label>
+                  <select
+                    id="retirement401kStrategy"
+                    className="form-control"
+                    value={retirement401kStrategy}
+                    onChange={(e) => setRetirement401kStrategy(e.target.value)}
+                  >
+                    {indexFunds.map(fund => (
+                      <option key={fund.symbol} value={fund.symbol}>
+                        {fund.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button className="btn-success" onClick={handle401kUpdate}>Update 401k Settings</button>
               </div>
             </div>
 

@@ -48,14 +48,24 @@ const choiceBState = {
     assetAllocation: {
       checking: 0,
       investments: 0,
-      emergencyFund: 0
+      emergencyFund: 0,
+      retirement401k: 0
+    },
+    retirement401k: {
+      contributionPercent: 0,
+      strategy: 'VOO',
+      balance: 0,
+      shares: 0
     }
   },
   markets: {
     positions: [
       { symbol: "ACME", shares: 0, price: 100 },
       { symbol: "TECH", shares: 100, price: 250 },   // Stock grant
-      { symbol: "CRYPTO_ETF", shares: 0, price: 50 }
+      { symbol: "CRYPTO_ETF", shares: 0, price: 50 },
+      { symbol: "VOO", shares: 0, price: 100 },
+      { symbol: "VTI", shares: 0, price: 80 },
+      { symbol: "VXUS", shares: 0, price: 60 }
     ],
     priceHistory: {
       ACME: [
@@ -66,6 +76,15 @@ const choiceBState = {
       ],
       CRYPTO_ETF: [
         { month: "Jan 2009", value: 50 }
+      ],
+      VOO: [
+        { month: "Jan 2009", value: 100 }
+      ],
+      VTI: [
+        { month: "Jan 2009", value: 80 }
+      ],
+      VXUS: [
+        { month: "Jan 2009", value: 60 }
       ]
     }
   }
@@ -112,14 +131,24 @@ export const GameProvider = ({ children }) => {
       assetAllocation: {
         checking: 50000,
         investments: 0,
-        emergencyFund: 0
+        emergencyFund: 0,
+        retirement401k: 0
+      },
+      retirement401k: {
+        contributionPercent: 0, // 0-20% of salary
+        strategy: 'VOO', // VOO, VTI, or other index funds
+        balance: 0,
+        shares: 0 // Track 401k-specific shares separately
       }
     },
     markets: {
       positions: [
         { symbol: 'ACME', shares: 0, price: 100 },
         { symbol: 'TECH', shares: 0, price: 250 },
-        { symbol: 'CRYPTO_ETF', shares: 0, price: 50 }
+        { symbol: 'CRYPTO_ETF', shares: 0, price: 50 },
+        { symbol: 'VOO', shares: 0, price: 100 }, // S&P 500 ETF
+        { symbol: 'VTI', shares: 0, price: 80 },    // Total Stock Market ETF
+        { symbol: 'VXUS', shares: 0, price: 60 }    // International Stock ETF
       ],
       priceHistory: {
         ACME: [
@@ -130,6 +159,15 @@ export const GameProvider = ({ children }) => {
         ],
         CRYPTO_ETF: [
           { month: 'Jan 2009', value: 50 }
+        ],
+        VOO: [
+          { month: 'Jan 2009', value: 100 }
+        ],
+        VTI: [
+          { month: 'Jan 2009', value: 80 }
+        ],
+        VXUS: [
+          { month: 'Jan 2009', value: 60 }
         ]
       }
     }
@@ -150,13 +188,14 @@ export const GameProvider = ({ children }) => {
     setGameState(prev => {
       let total = 0;
       
-      // Add asset allocation categories
+      // Add asset allocation categories (401k is already included in assetAllocation)
       for (const key in prev.finance.assetAllocation) {
         total += prev.finance.assetAllocation[key];
       }
       
-      // Add market positions at current prices
+      // Add market positions at current prices (excluding 401k holdings which are tracked separately)
       prev.markets.positions.forEach(position => {
+        // Only count non-401k positions (401k shares are tracked but not double-counted)
         total += position.shares * position.price;
       });
       
@@ -174,6 +213,20 @@ export const GameProvider = ({ children }) => {
         }
       };
     });
+  }, []);
+
+  const update401kSettings = useCallback((contributionPercent, strategy) => {
+    setGameState(prev => ({
+      ...prev,
+      finance: {
+        ...prev.finance,
+        retirement401k: {
+          ...prev.finance.retirement401k,
+          contributionPercent: Math.max(0, Math.min(20, contributionPercent)), // Clamp 0-20%
+          strategy: strategy || prev.finance.retirement401k.strategy
+        }
+      }
+    }));
   }, []);
 
   const updateStats = useCallback((healthChange, stressChange, happinessChange) => {
@@ -335,6 +388,12 @@ export const GameProvider = ({ children }) => {
       // Calculate total income
       const totalIncome = Object.values(prev.income).reduce((sum, val) => sum + val, 0);
 
+      // Calculate 401k contribution (pre-tax, deducted from salary)
+      const salary = prev.income.salary;
+      const contributionPercent = prev.finance.retirement401k.contributionPercent / 100;
+      const monthly401kContribution = salary * contributionPercent;
+      const netSalary = salary - monthly401kContribution; // Salary after 401k deduction
+
       // Calculate total expenses (use rent if renting, mortgage if owner)
       let totalExpenses = 0;
       for (const [key, value] of Object.entries(prev.expenses)) {
@@ -347,11 +406,11 @@ export const GameProvider = ({ children }) => {
         }
       }
 
-      // Process checking account: income first, then expenses
+      // Process checking account: income first (after 401k), then expenses
       let newChecking = prev.finance.assetAllocation.checking;
 
-      // Add income to checking
-      newChecking += totalIncome;
+      // Add income to checking (salary after 401k + other income)
+      newChecking += netSalary + (totalIncome - salary);
 
       // Subtract expenses from checking
       newChecking -= totalExpenses;
@@ -373,17 +432,38 @@ export const GameProvider = ({ children }) => {
       const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
       const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
 
-      const newAllocation = {
-        ...prev.finance.assetAllocation,
-        checking: newChecking,
-        emergencyFund: prev.finance.assetAllocation.emergencyFund + emergencyFundInterest
-      };
-
       // Update stock prices with some random variation (-5% to +5%)
-      const newPositions = prev.markets.positions.map(position => ({
+      let newPositions = prev.markets.positions.map(position => ({
         ...position,
         price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
       }));
+
+      // Process 401k contribution - invest in selected strategy
+      const strategy = prev.finance.retirement401k.strategy;
+      let new401kShares = prev.finance.retirement401k.shares || 0;
+      
+      // If 401k has a strategy selected, invest the contribution in that fund
+      if (monthly401kContribution > 0 && strategy) {
+        const strategyPosition = newPositions.find(p => p.symbol === strategy);
+        if (strategyPosition) {
+          const sharesToAdd = monthly401kContribution / strategyPosition.price;
+          new401kShares += sharesToAdd;
+        }
+      }
+
+      // Update 401k balance based on current value of holdings
+      let new401kBalance = 0;
+      const strategyPosition = newPositions.find(p => p.symbol === strategy);
+      if (strategyPosition && new401kShares > 0) {
+        new401kBalance = new401kShares * strategyPosition.price;
+      }
+
+      const newAllocation = {
+        ...prev.finance.assetAllocation,
+        checking: newChecking,
+        emergencyFund: prev.finance.assetAllocation.emergencyFund + emergencyFundInterest,
+        retirement401k: new401kBalance
+      };
 
       // Calculate new net worth
       let newNetWorth = 0;
@@ -428,7 +508,12 @@ export const GameProvider = ({ children }) => {
           ...prev.finance,
           netWorth: newNetWorth,
           netWorthHistory: newHistory,
-          assetAllocation: newAllocation
+          assetAllocation: newAllocation,
+          retirement401k: {
+            ...prev.finance.retirement401k,
+            balance: new401kBalance,
+            shares: new401kShares
+          }
         },
         markets: {
           ...prev.markets,
@@ -482,6 +567,7 @@ export const GameProvider = ({ children }) => {
     advanceMonth,
     getTotalIncome,
     getTotalExpenses,
+    update401kSettings,
     hasStarted,
     startGameWithChoiceB
   };
