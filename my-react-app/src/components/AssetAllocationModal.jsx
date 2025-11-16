@@ -114,6 +114,46 @@ const AssetAllocationModal = ({ onClose }) => {
   const netCashFlow = totalIncome - totalExpenses;
   const assetLabels = getAssetLabels();
 
+  // Calculate detailed income breakdown with taxes and deductions
+  const grossSalary = gameState.income.salary;
+  const otherIncome = (gameState.income.investments || 0) + (gameState.income.other || 0);
+  const preTax401k = monthly401kContribution;
+  const taxableIncome = grossSalary - preTax401k;
+  
+  // Tax calculations (simplified)
+  const federalTaxRate = 0.22; // 22% bracket (simplified)
+  const stateTaxRate = 0.05; // 5% state tax (simplified)
+  const ficaRate = 0.0765; // 7.65% FICA (Social Security + Medicare)
+  
+  const federalTax = taxableIncome * federalTaxRate;
+  const stateTax = taxableIncome * stateTaxRate;
+  const ficaTax = grossSalary * ficaRate; // FICA on gross salary
+  const totalTaxes = federalTax + stateTax + ficaTax;
+  
+  const netSalary = grossSalary - preTax401k - totalTaxes;
+  const netIncome = netSalary + otherIncome;
+
+  // Categorize expenses
+  const housingExpenses = {
+    rent: gameState.player.housingStatus === 'renting' ? gameState.expenses.rent : 0,
+    mortgage: gameState.player.housingStatus === 'owner' ? gameState.expenses.mortgage : 0,
+    utilities: gameState.expenses.utilities || 0
+  };
+  const housingTotal = housingExpenses.rent + housingExpenses.mortgage + housingExpenses.utilities;
+
+  const livingExpenses = {
+    food: gameState.expenses.food || 0,
+    transportation: gameState.expenses.transportation || 0,
+    entertainment: gameState.expenses.entertainment || 0
+  };
+  const livingTotal = livingExpenses.food + livingExpenses.transportation + livingExpenses.entertainment;
+
+  const financialExpenses = {
+    insurance: gameState.expenses.insurance || 0,
+    other: gameState.expenses.other || 0
+  };
+  const financialTotal = financialExpenses.insurance + financialExpenses.other;
+
   // Calculate total portfolio value (all stock positions)
   const portfolioValue = gameState.markets.positions.reduce((total, position) => {
     return total + (position.shares * position.price);
@@ -213,43 +253,180 @@ const AssetAllocationModal = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Middle Section: 3 Column Layout */}
-          <div className="dashboard-grid">
-            {/* Income Breakdown */}
-            <div className="breakdown-section">
+          {/* Middle Section: Detailed Income, Expenses, and Assets */}
+          <div className="dashboard-grid-detailed">
+            {/* Detailed Income Breakdown */}
+            <div className="breakdown-section detailed-section">
               <h3>Income Breakdown</h3>
               <div className="breakdown-list">
-                {Object.entries(gameState.income).map(([key, value]) => (
-                  <div key={key} className="breakdown-item">
-                    <span className="breakdown-label">{INCOME_LABELS[key]}:</span>
-                    <span className="breakdown-value positive">{formatCurrency(value)}</span>
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Gross Income:</span>
                   </div>
-                ))}
+                  <div className="breakdown-item sub-item">
+                    <span className="breakdown-label">Salary:</span>
+                    <span className="breakdown-value positive">{formatCurrency(grossSalary)}</span>
+                  </div>
+                  {otherIncome > 0 && (
+                    <>
+                      {gameState.income.investments > 0 && (
+                        <div className="breakdown-item sub-item">
+                          <span className="breakdown-label">Investment Income:</span>
+                          <span className="breakdown-value positive">{formatCurrency(gameState.income.investments)}</span>
+                        </div>
+                      )}
+                      {gameState.income.other > 0 && (
+                        <div className="breakdown-item sub-item">
+                          <span className="breakdown-label">Other Income:</span>
+                          <span className="breakdown-value positive">{formatCurrency(gameState.income.other)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Pre-Tax Deductions:</span>
+                  </div>
+                  {preTax401k > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">401k Contribution:</span>
+                      <span className="breakdown-value negative">{formatCurrency(preTax401k)}</span>
+                    </div>
+                  )}
+                  <div className="breakdown-item">
+                    <span className="breakdown-label">Taxable Income:</span>
+                    <span className="breakdown-value">{formatCurrency(taxableIncome)}</span>
+                  </div>
+                </div>
+
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Taxes:</span>
+                  </div>
+                  <div className="breakdown-item sub-item">
+                    <span className="breakdown-label">Federal Tax ({Math.round(federalTaxRate * 100)}%):</span>
+                    <span className="breakdown-value negative">{formatCurrency(federalTax)}</span>
+                  </div>
+                  <div className="breakdown-item sub-item">
+                    <span className="breakdown-label">State Tax ({Math.round(stateTaxRate * 100)}%):</span>
+                    <span className="breakdown-value negative">{formatCurrency(stateTax)}</span>
+                  </div>
+                  <div className="breakdown-item sub-item">
+                    <span className="breakdown-label">FICA ({Math.round(ficaRate * 100)}%):</span>
+                    <span className="breakdown-value negative">{formatCurrency(ficaTax)}</span>
+                  </div>
+                  <div className="breakdown-item total-item">
+                    <span className="breakdown-label">Total Taxes:</span>
+                    <span className="breakdown-value negative">{formatCurrency(totalTaxes)}</span>
+                  </div>
+                </div>
+
+                <div className="breakdown-category">
+                  <div className="breakdown-item total-item">
+                    <span className="breakdown-label">Net Income:</span>
+                    <span className="breakdown-value positive">{formatCurrency(netIncome)}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Asset Allocation Pie Chart */}
-            <div className="breakdown-section pie-chart-section">
+            <div className="breakdown-section pie-chart-section detailed-section">
               <h3>Asset Allocation</h3>
               <div className="pie-chart-container">
                 <Doughnut data={pieChartData} options={pieChartOptions} />
               </div>
+              <div className="asset-summary">
+                <div className="asset-summary-item">
+                  <span className="asset-summary-label">Total Assets:</span>
+                  <span className="asset-summary-value">
+                    {formatCurrency(chartData.reduce((a, b) => a + b, 0))}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Expenses Breakdown */}
-            <div className="breakdown-section">
+            {/* Detailed Expenses Breakdown */}
+            <div className="breakdown-section detailed-section">
               <h3>Expenses Breakdown</h3>
               <div className="breakdown-list">
-                {Object.entries(gameState.expenses).map(([key, value]) => {
-                  if (key === 'rent' && gameState.player.housingStatus !== 'renting') return null;
-                  if (key === 'mortgage' && gameState.player.housingStatus !== 'owner') return null;
-                  return (
-                    <div key={key} className="breakdown-item">
-                      <span className="breakdown-label">{EXPENSE_LABELS[key]}:</span>
-                      <span className="breakdown-value negative">{formatCurrency(value)}</span>
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Housing:</span>
+                    <span className="breakdown-value negative">{formatCurrency(housingTotal)}</span>
+                  </div>
+                  {housingExpenses.rent > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Rent:</span>
+                      <span className="breakdown-value negative">{formatCurrency(housingExpenses.rent)}</span>
                     </div>
-                  );
-                })}
+                  )}
+                  {housingExpenses.mortgage > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Mortgage:</span>
+                      <span className="breakdown-value negative">{formatCurrency(housingExpenses.mortgage)}</span>
+                    </div>
+                  )}
+                  {housingExpenses.utilities > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Utilities:</span>
+                      <span className="breakdown-value negative">{formatCurrency(housingExpenses.utilities)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Living Expenses:</span>
+                    <span className="breakdown-value negative">{formatCurrency(livingTotal)}</span>
+                  </div>
+                  {livingExpenses.food > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Food & Groceries:</span>
+                      <span className="breakdown-value negative">{formatCurrency(livingExpenses.food)}</span>
+                    </div>
+                  )}
+                  {livingExpenses.transportation > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Transportation:</span>
+                      <span className="breakdown-value negative">{formatCurrency(livingExpenses.transportation)}</span>
+                    </div>
+                  )}
+                  {livingExpenses.entertainment > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Entertainment:</span>
+                      <span className="breakdown-value negative">{formatCurrency(livingExpenses.entertainment)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="breakdown-category">
+                  <div className="breakdown-item category-header">
+                    <span className="breakdown-label">Financial & Other:</span>
+                    <span className="breakdown-value negative">{formatCurrency(financialTotal)}</span>
+                  </div>
+                  {financialExpenses.insurance > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Insurance:</span>
+                      <span className="breakdown-value negative">{formatCurrency(financialExpenses.insurance)}</span>
+                    </div>
+                  )}
+                  {financialExpenses.other > 0 && (
+                    <div className="breakdown-item sub-item">
+                      <span className="breakdown-label">Other Expenses:</span>
+                      <span className="breakdown-value negative">{formatCurrency(financialExpenses.other)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="breakdown-category">
+                  <div className="breakdown-item total-item">
+                    <span className="breakdown-label">Total Expenses:</span>
+                    <span className="breakdown-value negative">{formatCurrency(totalExpenses)}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
