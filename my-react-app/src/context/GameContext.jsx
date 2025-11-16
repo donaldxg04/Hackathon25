@@ -75,65 +75,11 @@ export const GameProvider = ({ children }) => {
   // Track whether the game has been started via the start menu
   const [hasStarted, setHasStarted] = useState(false);
 
-  const [gameState, setGameState] = useState({
-    currentDate: new Date(2009, 0, 1), // January 1, 2009
-    player: {
-      name: "John Doe",
-      age: 25,
-      occupation: "Software Developer",
-      location: "San Francisco, CA",
-      housingStatus: "renting" // "renting" or "owner"
-    },
-    income: {
-      salary: 8000,
-      investments: 0,
-      other: 0
-    },
-    expenses: {
-      rent: 1500, // Only applicable when renting
-      mortgage: 0, // Only applicable when owning
-      utilities: 200,
-      food: 600,
-      transportation: 300,
-      insurance: 250,
-      entertainment: 300,
-      other: 350
-    },
-    stats: {
-      health: 80,
-      stress: 30,
-      happiness: 65
-    },
-    finance: {
-      netWorth: 50000,
-      netWorthHistory: [
-        { month: 'Jan 2009', value: 50000 }
-      ],
-      assetAllocation: {
-        checking: 50000,
-        investments: 0,
-        emergencyFund: 0
-      }
-    },
-    markets: {
-      positions: [
-        { symbol: 'ACME', shares: 0, price: 100 },
-        { symbol: 'TECH', shares: 0, price: 250 },
-        { symbol: 'CRYPTO_ETF', shares: 0, price: 50 }
-      ],
-      priceHistory: {
-        ACME: [
-          { month: 'Jan 2009', value: 100 }
-        ],
-        TECH: [
-          { month: 'Jan 2009', value: 250 }
-        ],
-        CRYPTO_ETF: [
-          { month: 'Jan 2009', value: 50 }
-        ]
-      }
-    }
-  });
+  // Game speed: 0 = paused, 1 = normal (1 day/sec), 5 = fast (5 days/sec)
+  const [gameSpeed, setGameSpeed] = useState(1);
+
+  // Use choiceBState as the default initial state
+  const [gameState, setGameState] = useState({...choiceBState});
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -323,67 +269,80 @@ export const GameProvider = ({ children }) => {
     return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
   };
 
-  const advanceMonth = useCallback(() => {
+  const advanceDay = useCallback(() => {
     setGameState(prev => {
-      // Create new date (next month)
+      // Create new date (next day)
       const newDate = new Date(prev.currentDate);
-      newDate.setMonth(newDate.getMonth() + 1);
+      newDate.setDate(newDate.getDate() + 1);
+
+      const dayOfMonth = newDate.getDate();
+      const isFirstOfMonth = dayOfMonth === 1;
+      const isFourteenthOfMonth = dayOfMonth === 14;
 
       // Check if year changed to increment age
       const ageIncrement = newDate.getFullYear() > prev.currentDate.getFullYear() ? 1 : 0;
 
-      // Calculate total income
-      const totalIncome = Object.values(prev.income).reduce((sum, val) => sum + val, 0);
+      let newAllocation = { ...prev.finance.assetAllocation };
+      let newPositions = [...prev.markets.positions];
+      let newPriceHistory = { ...prev.markets.priceHistory };
 
-      // Calculate total expenses (use rent if renting, mortgage if owner)
-      let totalExpenses = 0;
-      for (const [key, value] of Object.entries(prev.expenses)) {
-        if (key === 'rent' && prev.player.housingStatus === 'renting') {
-          totalExpenses += value;
-        } else if (key === 'mortgage' && prev.player.housingStatus === 'owner') {
-          totalExpenses += value;
-        } else if (key !== 'rent' && key !== 'mortgage') {
-          totalExpenses += value;
+      // Salary payments: 1/2 of monthly salary on 1st and 14th
+      if (isFirstOfMonth || isFourteenthOfMonth) {
+        const halfSalary = prev.income.salary / 2;
+        newAllocation.checking += halfSalary;
+      }
+
+      // Rent and utilities paid on 1st of month
+      if (isFirstOfMonth) {
+        // Pay rent or mortgage
+        if (prev.player.housingStatus === 'renting') {
+          newAllocation.checking -= prev.expenses.rent;
+        } else if (prev.player.housingStatus === 'owner') {
+          newAllocation.checking -= prev.expenses.mortgage;
         }
+
+        // Pay utilities
+        newAllocation.checking -= prev.expenses.utilities;
+
+        // Apply overdraft fee if checking went negative
+        const OVERDRAFT_FEE = 35;
+        if (newAllocation.checking < 0 && prev.finance.assetAllocation.checking >= 0) {
+          // Just went into overdraft
+          newAllocation.checking -= OVERDRAFT_FEE;
+        } else if (newAllocation.checking < 0 && prev.finance.assetAllocation.checking < 0) {
+          // Already in overdraft, apply fee again
+          newAllocation.checking -= OVERDRAFT_FEE;
+        }
+
+        // Apply monthly emergency fund interest on 1st of month
+        const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
+        const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
+        newAllocation.emergencyFund += emergencyFundInterest;
+
+        // Update stock prices on 1st of month with some random variation (-5% to +5%)
+        newPositions = prev.markets.positions.map(position => ({
+          ...position,
+          price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
+        }));
+
+        // Update price history for each stock on 1st of month
+        newPriceHistory = {};
+        for (const symbol in prev.markets.priceHistory) {
+          const position = newPositions.find(p => p.symbol === symbol);
+          const history = [...prev.markets.priceHistory[symbol], {
+            month: formatMonthYear(newDate),
+            value: position ? position.price : 0
+          }];
+          if (history.length > 12) {
+            history.shift();
+          }
+          newPriceHistory[symbol] = history;
+        }
+      } else {
+        // Keep same positions and price history if not 1st
+        newPositions = prev.markets.positions;
+        newPriceHistory = prev.markets.priceHistory;
       }
-
-      // Process checking account: income first, then expenses
-      let newChecking = prev.finance.assetAllocation.checking;
-
-      // Add income to checking
-      newChecking += totalIncome;
-
-      // Subtract expenses from checking
-      newChecking -= totalExpenses;
-
-      // Apply overdraft fee if checking went negative
-      const OVERDRAFT_FEE = 35;
-      let overdraftFeeApplied = false;
-      if (newChecking < 0 && prev.finance.assetAllocation.checking >= 0) {
-        // Just went into overdraft this month
-        newChecking -= OVERDRAFT_FEE;
-        overdraftFeeApplied = true;
-      } else if (newChecking < 0 && prev.finance.assetAllocation.checking < 0) {
-        // Already in overdraft, apply fee again
-        newChecking -= OVERDRAFT_FEE;
-        overdraftFeeApplied = true;
-      }
-
-      // Apply 2% monthly interest to emergency fund
-      const EMERGENCY_FUND_INTEREST_RATE = 0.02 / 12; // 2% annual = ~0.167% monthly
-      const emergencyFundInterest = prev.finance.assetAllocation.emergencyFund * EMERGENCY_FUND_INTEREST_RATE;
-
-      const newAllocation = {
-        ...prev.finance.assetAllocation,
-        checking: newChecking,
-        emergencyFund: prev.finance.assetAllocation.emergencyFund + emergencyFundInterest
-      };
-
-      // Update stock prices with some random variation (-5% to +5%)
-      const newPositions = prev.markets.positions.map(position => ({
-        ...position,
-        price: Math.max(1, position.price * (1 + (Math.random() * 0.1 - 0.05)))
-      }));
 
       // Calculate new net worth
       let newNetWorth = 0;
@@ -394,27 +353,22 @@ export const GameProvider = ({ children }) => {
         newNetWorth += position.shares * position.price;
       });
 
-      // Add to history (keep last 12 months)
-      const newHistory = [...prev.finance.netWorthHistory, {
-        month: formatMonthYear(newDate),
-        value: newNetWorth
-      }];
-      if (newHistory.length > 12) {
-        newHistory.shift();
-      }
-
-      // Update price history for each stock
-      const newPriceHistory = {};
-      for (const symbol in prev.markets.priceHistory) {
-        const position = newPositions.find(p => p.symbol === symbol);
-        const history = [...prev.markets.priceHistory[symbol], {
+      // Update net worth history only on 1st of month
+      let newHistory = prev.finance.netWorthHistory;
+      if (isFirstOfMonth) {
+        newHistory = [...prev.finance.netWorthHistory, {
           month: formatMonthYear(newDate),
-          value: position ? position.price : 0
+          value: newNetWorth
         }];
-        if (history.length > 12) {
-          history.shift();
+        if (newHistory.length > 12) {
+          newHistory.shift();
         }
-        newPriceHistory[symbol] = history;
+      } else {
+        // Update the current month's value
+        newHistory = [...prev.finance.netWorthHistory];
+        if (newHistory.length > 0) {
+          newHistory[newHistory.length - 1].value = newNetWorth;
+        }
       }
 
       return {
@@ -471,6 +425,8 @@ export const GameProvider = ({ children }) => {
 
   const value = {
     gameState,
+    gameSpeed,
+    setGameSpeed,
     formatCurrency,
     formatDate,
     recalculateNetWorth,
@@ -479,7 +435,7 @@ export const GameProvider = ({ children }) => {
     buyStock,
     sellStock,
     getStockPrice,
-    advanceMonth,
+    advanceDay,
     getTotalIncome,
     getTotalExpenses,
     hasStarted,

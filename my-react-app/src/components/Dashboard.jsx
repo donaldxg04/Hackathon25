@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import NetWorthCard from './NetWorthCard';
 import AssetAllocationCard from './AssetAllocationCard';
@@ -9,7 +9,7 @@ import AssetAllocationModal from './AssetAllocationModal';
 import InvestingModal from './InvestingModal';
 
 const Dashboard = () => {
-  const { gameState, formatDate, advanceMonth } = useGame();
+  const { gameState, formatDate, advanceDay, gameSpeed, setGameSpeed } = useGame();
   const [activeModal, setActiveModal] = useState(null);
 
   const openModal = (modalId) => {
@@ -21,6 +21,20 @@ const Dashboard = () => {
     setActiveModal(null);
     document.body.style.overflow = '';
   };
+
+  // Auto-advance timeline based on game speed
+  useEffect(() => {
+    if (gameSpeed === 0) return; // Paused
+
+    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed
+    const interval = gameSpeed === 1 ? 1000 : 200;
+
+    const timer = setInterval(() => {
+      advanceDay();
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [gameSpeed, advanceDay]);
 
   return (
     <div className="dashboard-container">
@@ -34,7 +48,29 @@ const Dashboard = () => {
       <div className="right-column">
         <div className="date-container">
           <div className="date-display">{formatDate(gameState.currentDate)}</div>
-          <button className="btn-next-month" onClick={advanceMonth}>Next Month →</button>
+          <div className="timeline-controls">
+            <button
+              className={`btn-timeline ${gameSpeed === 0 ? 'active' : ''}`}
+              onClick={() => setGameSpeed(0)}
+              title="Pause"
+            >
+              ⏸
+            </button>
+            <button
+              className={`btn-timeline ${gameSpeed === 1 ? 'active' : ''}`}
+              onClick={() => setGameSpeed(1)}
+              title="Normal Speed (1 day/sec)"
+            >
+              ▶ 1x
+            </button>
+            <button
+              className={`btn-timeline ${gameSpeed === 5 ? 'active' : ''}`}
+              onClick={() => setGameSpeed(5)}
+              title="Fast Speed (5 days/sec)"
+            >
+              ⏩ 5x
+            </button>
+          </div>
         </div>
         <PlayerCard />
         <MarketWatchCard onClick={() => openModal('investing')} />
