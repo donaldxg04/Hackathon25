@@ -374,7 +374,9 @@ body {
     max-width: 600px;
     width: 90%;
     max-height: 80vh;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     color: #fff;
 }
@@ -408,6 +410,7 @@ body {
     align-items: center;
     padding: 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -438,6 +441,46 @@ body {
 
 .modal-body {
     padding: 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Custom Scrollbar Styling for Modals */
+.modal-body::-webkit-scrollbar,
+.ledger-entries::-webkit-scrollbar,
+.modal-fullscreen .modal-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.modal-body::-webkit-scrollbar-track,
+.ledger-entries::-webkit-scrollbar-track,
+.modal-fullscreen .modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+}
+
+.modal-body::-webkit-scrollbar-thumb,
+.ledger-entries::-webkit-scrollbar-thumb,
+.modal-fullscreen .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover,
+.ledger-entries::-webkit-scrollbar-thumb:hover,
+.modal-fullscreen .modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Firefox scrollbar styling */
+.modal-body,
+.ledger-entries,
+.modal-fullscreen .modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
 }
 
 .modal-body p {
@@ -1758,6 +1801,9 @@ body {
 .ledger-modal {
     max-width: 800px;
     max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .ledger-filters {
@@ -1797,27 +1843,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-
-.ledger-entries::-webkit-scrollbar {
-    width: 8px;
-}
-
-.ledger-entries::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-}
-
-.ledger-entries::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-}
-
-.ledger-entries::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
 }
 
 .ledger-empty-state {
