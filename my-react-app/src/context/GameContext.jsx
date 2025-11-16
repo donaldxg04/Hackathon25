@@ -150,7 +150,8 @@ const choiceBState = {
         { month: "Jan 2009", value: 13.83301735 }
       ]
     }
-  }
+  },
+  ledger: []  // Array of ledger entries tracking game history
 };
 
 export const GameProvider = ({ children }) => {
@@ -806,6 +807,21 @@ export const GameProvider = ({ children }) => {
     recalculateNetWorth();
   }, [recalculateNetWorth]);
 
+  // Add entry to ledger
+  const addLedgerEntry = useCallback((entry) => {
+    setGameState(prev => {
+      const newEntry = {
+        id: Date.now() + Math.random(), // Unique ID
+        timestamp: new Date(prev.currentDate),
+        ...entry
+      };
+      return {
+        ...prev,
+        ledger: [...prev.ledger, newEntry]
+      };
+    });
+  }, []);
+
   const value = {
     gameState,
     gameSpeed,
@@ -827,7 +843,8 @@ export const GameProvider = ({ children }) => {
     removeExpense,
     hasStarted,
     startGameWithChoiceB,
-    applyEventStateChanges
+    applyEventStateChanges,
+    addLedgerEntry
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

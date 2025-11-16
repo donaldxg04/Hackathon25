@@ -8,6 +8,8 @@ import NetWorthModal from './NetWorthModal';
 import AssetAllocationModal from './AssetAllocationModal';
 import InvestingModal from './InvestingModal';
 import DecisionModal from './DecisionModal';
+import LedgerModal from './LedgerModal';
+import LedgerCard from './LedgerCard';
 import { shouldTriggerEvent } from '../data/storyline';
 
 
@@ -32,8 +34,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (gameSpeed === 0 || activeModal === 'decision') return; // Paused or decision modal open
 
-    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed (5 days/sec)
-    const interval = gameSpeed === 1 ? 1000 : 200;
+    // Calculate interval: 1000ms for 1x speed, 200ms for 5x speed, 100ms for 10x speed
+    const interval = gameSpeed === 1 ? 1000 : gameSpeed === 5 ? 200 : gameSpeed === 10 ? 100 : 1000;
 
     const timer = setInterval(() => {
       advanceDay(); // Advances currentDate by 1 day and updates all stock prices
@@ -69,6 +71,7 @@ const Dashboard = () => {
       <div className="left-column">
         <NetWorthCard onClick={() => openModal('netWorth')} />
         <AssetAllocationCard onClick={() => openModal('assetAllocation')} />
+        <LedgerCard onClick={() => openModal('ledger')} />
       </div>
 
       {/* Right Column */}
@@ -105,6 +108,14 @@ const Dashboard = () => {
             >
               ⏩ 5x
             </button>
+            <button
+              className={`btn-timeline ${gameSpeed === 10 ? 'active' : ''}`}
+              onClick={() => setGameSpeed(10)}
+              disabled={activeModal === 'decision'}
+              title="Very Fast Speed (10 days/sec)"
+            >
+              ⏩⏩ 10x
+            </button>
           </div>
         </div>
         <PlayerCard />
@@ -116,6 +127,7 @@ const Dashboard = () => {
       {activeModal === 'netWorth' && <NetWorthModal onClose={closeModal} />}
       {activeModal === 'assetAllocation' && <AssetAllocationModal onClose={closeModal} />}
       {activeModal === 'investing' && <InvestingModal onClose={closeModal} />}
+      {activeModal === 'ledger' && <LedgerModal onClose={closeModal} />}
     </div>
   );
 };
