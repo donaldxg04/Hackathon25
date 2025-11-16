@@ -411,8 +411,8 @@ const AssetAllocationModal = ({ onClose }) => {
               <h3>Expenses Breakdown</h3>
               <div className="breakdown-list">
                 {/* Render all expenses with edit/remove functionality */}
-                {Object.entries(gameState.expenses).map(([expenseKey, expenseValue]) => {
-                  if (expenseValue === 0 && expenseKey !== 'rent' && expenseKey !== 'mortgage') return null;
+                {Object.entries(gameState.expenses || {}).map(([expenseKey, expenseValue]) => {
+                  // Show all expenses, including zero values, so users can edit them
                   
                   const isEditing = editingExpenses.hasOwnProperty(expenseKey);
                   const expenseLabel = EXPENSE_LABELS[expenseKey] || expenseKey.charAt(0).toUpperCase() + expenseKey.slice(1).replace(/_/g, ' ');
@@ -448,36 +448,36 @@ const AssetAllocationModal = ({ onClose }) => {
                               onClick={() => handleExpenseChange(expenseKey, editingExpenses[expenseKey])}
                               title="Save"
                             >
-                              ✓
+                              Save
                             </button>
                             <button
                               className="btn-expense-cancel"
                               onClick={() => cancelEditingExpense(expenseKey)}
                               title="Cancel"
                             >
-                              ✕
+                              Cancel
                             </button>
                           </div>
                         ) : (
                           <>
                             <span className="breakdown-value negative">{formatCurrency(expenseValue)}</span>
                             <div className="expense-actions">
+                            <button
+                              className="btn-expense-edit"
+                              onClick={() => startEditingExpense(expenseKey)}
+                              title="Edit"
+                            >
+                              Edit
+                            </button>
+                            {!isProtected && (
                               <button
-                                className="btn-expense-edit"
-                                onClick={() => startEditingExpense(expenseKey)}
-                                title="Edit"
+                                className="btn-expense-remove"
+                                onClick={() => handleRemoveExpense(expenseKey)}
+                                title="Remove"
                               >
-                                ✏️
+                                Remove
                               </button>
-                              {!isProtected && (
-                                <button
-                                  className="btn-expense-remove"
-                                  onClick={() => handleRemoveExpense(expenseKey)}
-                                  title="Remove"
-                                >
-                                  🗑️
-                                </button>
-                              )}
+                            )}
                             </div>
                           </>
                         )}
