@@ -1873,3 +1873,18 @@ body {
     color: #f87171;
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
+
+.ledger-financial-effects {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ledger-financial-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #a8d8ea;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

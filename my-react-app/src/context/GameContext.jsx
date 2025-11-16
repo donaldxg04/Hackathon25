@@ -273,18 +273,50 @@ export const GameProvider = ({ children }) => {
   }, []);
 
   const update401kSettings = useCallback((contributionPercent, strategy) => {
-    setGameState(prev => ({
-      ...prev,
-      finance: {
-        ...prev.finance,
-        retirement401k: {
-          ...prev.finance.retirement401k,
-          contributionPercent: Math.max(0, Math.min(20, contributionPercent)), // Clamp 0-20%
-          strategy: strategy || prev.finance.retirement401k.strategy
+    setGameState(prev => {
+      const oldPercent = prev.finance.retirement401k.contributionPercent;
+      const oldStrategy = prev.finance.retirement401k.strategy;
+      const newPercent = Math.max(0, Math.min(20, contributionPercent));
+      const newStrategy = strategy || oldStrategy;
+      
+      // Add ledger entry if there's a change
+      const hasChange = oldPercent !== newPercent || oldStrategy !== newStrategy;
+      let newLedger = prev.ledger;
+      
+      if (hasChange) {
+        const changes = [];
+        if (oldPercent !== newPercent) {
+          changes.push(`Contribution: ${oldPercent}% → ${newPercent}%`);
         }
+        if (oldStrategy !== newStrategy) {
+          changes.push(`Strategy: ${oldStrategy} → ${newStrategy}`);
+        }
+        
+        const newEntry = {
+          id: Date.now() + Math.random(),
+          timestamp: new Date(prev.currentDate),
+          type: 'action',
+          title: '401k Settings Updated',
+          description: changes.join(', '),
+          date: formatDate(prev.currentDate)
+        };
+        newLedger = [...prev.ledger, newEntry];
       }
-    }));
-  }, []);
+      
+      return {
+        ...prev,
+        finance: {
+          ...prev.finance,
+          retirement401k: {
+            ...prev.finance.retirement401k,
+            contributionPercent: newPercent,
+            strategy: newStrategy
+          }
+        },
+        ledger: newLedger
+      };
+    });
+  }, [formatDate]);
 
   const updateStats = useCallback((healthChange, stressChange, happinessChange) => {
     setGameState(prev => ({
@@ -305,37 +337,68 @@ export const GameProvider = ({ children }) => {
       return { success: false, message: 'Amount must be greater than zero.' };
     }
 
+    let success = false;
     setGameState(prev => {
       if (prev.finance.assetAllocation[fromKey] < amount) {
         return prev; // Will be handled by caller
       }
 
+      success = true;
       const newAllocation = { ...prev.finance.assetAllocation };
       newAllocation[fromKey] -= amount;
       newAllocation[toKey] += amount;
+
+      // Add ledger entry
+      const accountLabels = {
+        checking: 'Checking Account',
+        investments: 'Investments',
+        emergencyFund: 'Emergency Fund',
+        savings: 'Savings',
+        realEstate: 'Real Estate',
+        retirement401k: '401k Retirement'
+      };
+
+      const newEntry = {
+        id: Date.now() + Math.random(),
+        timestamp: new Date(prev.currentDate),
+        type: 'action',
+        title: 'Fund Transfer',
+        description: `Transferred ${formatCurrency(amount)} from ${accountLabels[fromKey] || fromKey} to ${accountLabels[toKey] || toKey}`,
+        financialChanges: {
+          [fromKey]: -amount,
+          [toKey]: amount
+        },
+        date: formatDate(prev.currentDate)
+      };
 
       return {
         ...prev,
         finance: {
           ...prev.finance,
           assetAllocation: newAllocation
-        }
+        },
+        ledger: [...prev.ledger, newEntry]
       };
     });
 
-    recalculateNetWorth();
-    const formattedAmount = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-    return { success: true, message: `Transferred ${formattedAmount} successfully.` };
-  }, [recalculateNetWorth]);
+    if (success) {
+      recalculateNetWorth();
+      const formattedAmount = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount);
+      return { success: true, message: `Transferred ${formattedAmount} successfully.` };
+    }
+    return { success: false, message: 'Insufficient funds.' };
+  }, [recalculateNetWorth, formatCurrency, formatDate]);
 
   const buyStock = useCallback((symbol, shares) => {
     if (shares <= 0) {
       return { success: false, message: 'Number of shares must be greater than zero.' };
     }
 
+    let success = false;
+    let stockPrice = 0;
     setGameState(prev => {
       const position = prev.markets.positions.find(p => p.symbol === symbol);
       if (!position) {
@@ -343,6 +406,7 @@ export const GameProvider = ({ children }) => {
       }
 
       const price = position.price;
+      stockPrice = price;
       const cost = price * shares;
 
       // Check if investments allocation has enough cash
@@ -350,6 +414,7 @@ export const GameProvider = ({ children }) => {
         return prev; // Will be handled by caller
       }
 
+      success = true;
       // Update positions
       const newPositions = prev.markets.positions.map(p =>
         p.symbol === symbol ? { ...p, shares: p.shares + shares } : p
@@ -358,6 +423,19 @@ export const GameProvider = ({ children }) => {
       // Deduct from investments allocation
       const newAllocation = { ...prev.finance.assetAllocation };
       newAllocation.investments -= cost;
+
+      // Add ledger entry
+      const newEntry = {
+        id: Date.now() + Math.random(),
+        timestamp: new Date(prev.currentDate),
+        type: 'action',
+        title: 'Stock Purchase',
+        description: `Bought ${shares} shares of ${symbol} at ${formatCurrency(price)} per share (Total: ${formatCurrency(cost)})`,
+        financialChanges: {
+          investments: -cost
+        },
+        date: formatDate(prev.currentDate)
+      };
 
       return {
         ...prev,
@@ -368,19 +446,24 @@ export const GameProvider = ({ children }) => {
         finance: {
           ...prev.finance,
           assetAllocation: newAllocation
-        }
+        },
+        ledger: [...prev.ledger, newEntry]
       };
     });
 
-    recalculateNetWorth();
-    return { success: true, message: `Bought ${shares} shares of ${symbol} successfully.` };
-  }, [recalculateNetWorth]);
+    if (success) {
+      recalculateNetWorth();
+      return { success: true, message: `Bought ${shares} shares of ${symbol} successfully.` };
+    }
+    return { success: false, message: 'Insufficient funds or invalid symbol.' };
+  }, [recalculateNetWorth, formatCurrency, formatDate]);
 
   const sellStock = useCallback((symbol, shares) => {
     if (shares <= 0) {
       return { success: false, message: 'Number of shares must be greater than zero.' };
     }
 
+    let success = false;
     setGameState(prev => {
       const position = prev.markets.positions.find(p => p.symbol === symbol);
       if (!position || position.shares < shares) {
@@ -389,6 +472,7 @@ export const GameProvider = ({ children }) => {
 
       const price = position.price;
       const proceeds = price * shares;
+      success = true;
 
       // Update positions (remove if shares go to 0)
       const newPositions = prev.markets.positions.map(p =>
@@ -399,6 +483,19 @@ export const GameProvider = ({ children }) => {
       const newAllocation = { ...prev.finance.assetAllocation };
       newAllocation.investments += proceeds;
 
+      // Add ledger entry
+      const newEntry = {
+        id: Date.now() + Math.random(),
+        timestamp: new Date(prev.currentDate),
+        type: 'action',
+        title: 'Stock Sale',
+        description: `Sold ${shares} shares of ${symbol} at ${formatCurrency(price)} per share (Total: ${formatCurrency(proceeds)})`,
+        financialChanges: {
+          investments: proceeds
+        },
+        date: formatDate(prev.currentDate)
+      };
+
       return {
         ...prev,
         markets: {
@@ -408,13 +505,17 @@ export const GameProvider = ({ children }) => {
         finance: {
           ...prev.finance,
           assetAllocation: newAllocation
-        }
+        },
+        ledger: [...prev.ledger, newEntry]
       };
     });
 
-    recalculateNetWorth();
-    return { success: true, message: `Sold ${shares} shares of ${symbol} successfully.` };
-  }, [recalculateNetWorth]);
+    if (success) {
+      recalculateNetWorth();
+      return { success: true, message: `Sold ${shares} shares of ${symbol} successfully.` };
+    }
+    return { success: false, message: 'Insufficient shares or invalid symbol.' };
+  }, [recalculateNetWorth, formatCurrency, formatDate]);
 
   const getStockPrice = useCallback((symbol) => {
     const position = gameState.markets.positions.find(p => p.symbol === symbol);
@@ -669,38 +770,124 @@ export const GameProvider = ({ children }) => {
   }, [gameState.expenses, gameState.player.housingStatus]);
 
   const updateExpense = useCallback((expenseKey, amount) => {
-    setGameState(prev => ({
-      ...prev,
-      expenses: {
-        ...prev.expenses,
-        [expenseKey]: Math.max(0, amount || 0)
-      }
-    }));
-  }, []);
+    setGameState(prev => {
+      const oldAmount = prev.expenses[expenseKey] || 0;
+      const newAmount = Math.max(0, amount || 0);
+      
+      const expenseLabels = {
+        rent: 'Rent',
+        mortgage: 'Mortgage',
+        utilities: 'Utilities',
+        food: 'Food',
+        transportation: 'Transportation',
+        insurance: 'Insurance',
+        entertainment: 'Entertainment',
+        other: 'Other'
+      };
+      
+      const newEntry = {
+        id: Date.now() + Math.random(),
+        timestamp: new Date(prev.currentDate),
+        type: 'action',
+        title: 'Expense Updated',
+        description: `${expenseLabels[expenseKey] || expenseKey}: ${formatCurrency(oldAmount)} → ${formatCurrency(newAmount)}`,
+        financialChanges: {
+          expenses: { [expenseKey]: newAmount - oldAmount }
+        },
+        date: formatDate(prev.currentDate)
+      };
+      
+      return {
+        ...prev,
+        expenses: {
+          ...prev.expenses,
+          [expenseKey]: newAmount
+        },
+        ledger: [...prev.ledger, newEntry]
+      };
+    });
+  }, [formatCurrency, formatDate]);
 
   const addExpense = useCallback((expenseKey, amount) => {
-    setGameState(prev => ({
-      ...prev,
-      expenses: {
-        ...prev.expenses,
-        [expenseKey]: Math.max(0, amount || 0)
-      }
-    }));
-  }, []);
+    setGameState(prev => {
+      const expenseLabels = {
+        rent: 'Rent',
+        mortgage: 'Mortgage',
+        utilities: 'Utilities',
+        food: 'Food',
+        transportation: 'Transportation',
+        insurance: 'Insurance',
+        entertainment: 'Entertainment',
+        other: 'Other'
+      };
+      
+      const newAmount = Math.max(0, amount || 0);
+      
+      const newEntry = {
+        id: Date.now() + Math.random(),
+        timestamp: new Date(prev.currentDate),
+        type: 'action',
+        title: 'Expense Added',
+        description: `Added ${expenseLabels[expenseKey] || expenseKey}: ${formatCurrency(newAmount)}`,
+        financialChanges: {
+          expenses: { [expenseKey]: newAmount }
+        },
+        date: formatDate(prev.currentDate)
+      };
+      
+      return {
+        ...prev,
+        expenses: {
+          ...prev.expenses,
+          [expenseKey]: newAmount
+        },
+        ledger: [...prev.ledger, newEntry]
+      };
+    });
+  }, [formatCurrency, formatDate]);
 
   const removeExpense = useCallback((expenseKey) => {
     setGameState(prev => {
       const newExpenses = { ...prev.expenses };
+      const oldAmount = prev.expenses[expenseKey] || 0;
+      
       // Don't allow removing rent/mortgage as they're tied to housing status
       if (expenseKey !== 'rent' && expenseKey !== 'mortgage') {
         delete newExpenses[expenseKey];
+        
+        const expenseLabels = {
+          rent: 'Rent',
+          mortgage: 'Mortgage',
+          utilities: 'Utilities',
+          food: 'Food',
+          transportation: 'Transportation',
+          insurance: 'Insurance',
+          entertainment: 'Entertainment',
+          other: 'Other'
+        };
+        
+        const newEntry = {
+          id: Date.now() + Math.random(),
+          timestamp: new Date(prev.currentDate),
+          type: 'action',
+          title: 'Expense Removed',
+          description: `Removed ${expenseLabels[expenseKey] || expenseKey} (was ${formatCurrency(oldAmount)})`,
+          financialChanges: {
+            expenses: { [expenseKey]: -oldAmount }
+          },
+          date: formatDate(prev.currentDate)
+        };
+        
+        return {
+          ...prev,
+          expenses: newExpenses,
+          ledger: [...prev.ledger, newEntry]
+        };
       }
-      return {
-        ...prev,
-        expenses: newExpenses
-      };
+      
+      return prev;
     });
-  }, []);
+  }, [formatCurrency, formatDate]);
 
   // Initialize game with Choice B (Big Tech Data Science role) and player name
   const startGameWithChoiceB = useCallback((playerName) => {

@@ -2,13 +2,69 @@ import { useEffect, useState } from 'react';
 import { useGame } from '../context/GameContext';
 
 const LedgerModal = ({ onClose }) => {
-  const { gameState, formatDate } = useGame();
-  const [filter, setFilter] = useState('all'); // 'all', 'decision', 'randomEvent'
+  const { gameState, formatDate, formatCurrency } = useGame();
+  const [filter, setFilter] = useState('all'); // 'all', 'decision', 'randomEvent', 'action'
   
   const ledgerEntries = gameState?.ledger || [];
   const filteredEntries = filter === 'all' 
     ? ledgerEntries 
     : ledgerEntries.filter(entry => entry.type === filter);
+  
+  const getFinancialDisplay = (financialChanges) => {
+    if (!financialChanges) return null;
+    const financialItems = [];
+    
+    // Handle different financial change structures
+    if (financialChanges.expenses) {
+      // Expense changes
+      Object.entries(financialChanges.expenses).forEach(([key, value]) => {
+        if (value !== 0) {
+          const expenseLabels = {
+            rent: 'Rent',
+            mortgage: 'Mortgage',
+            utilities: 'Utilities',
+            food: 'Food',
+            transportation: 'Transportation',
+            insurance: 'Insurance',
+            entertainment: 'Entertainment',
+            other: 'Other'
+          };
+          financialItems.push(
+            <span key={key} className={`effect-badge ${value > 0 ? 'negative' : 'positive'}`}>
+              {expenseLabels[key] || key}: {value > 0 ? '+' : ''}{formatCurrency(value)}
+            </span>
+          );
+        }
+      });
+    } else {
+      // Direct financial changes (checking, investments, etc.)
+      const accountLabels = {
+        checking: 'Checking',
+        investments: 'Investments',
+        emergencyFund: 'Emergency Fund',
+        savings: 'Savings',
+        realEstate: 'Real Estate',
+        retirement401k: '401k'
+      };
+      
+      Object.entries(financialChanges).forEach(([key, value]) => {
+        if (value !== 0 && typeof value === 'number') {
+          financialItems.push(
+            <span key={key} className={`effect-badge ${value > 0 ? 'positive' : 'negative'}`}>
+              {accountLabels[key] || key}: {value > 0 ? '+' : ''}{formatCurrency(value)}
+            </span>
+          );
+        }
+      });
+    }
+    
+    return financialItems.length > 0 ? (
+      <div className="ledger-financial-effects">
+        <div className="ledger-financial-label">Financial Impact:</div>
+        <div className="ledger-effects">{financialItems}</div>
+      </div>
+    ) : null;
+  };
   
   const sortedEntries = [...filteredEntries].reverse(); // Most recent first
 
@@ -78,6 +134,12 @@ const LedgerModal = ({ onClose }) => {
             >
               Random Events ({ledgerEntries.filter(e => e.type === 'randomEvent').length})
             </button>
+            <button 
+              className={`ledger-filter-btn ${filter === 'action' ? 'active' : ''}`}
+              onClick={() => setFilter('action')}
+            >
+              Actions ({ledgerEntries.filter(e => e.type === 'action').length})
+            </button>
           </div>
 
           {/* Ledger Entries */}
@@ -92,7 +154,7 @@ const LedgerModal = ({ onClose }) => {
                   <div className="ledger-entry-header">
                     <div className="ledger-entry-icon">
                       <span className="ledger-type-badge">
-                        {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : 'ENTRY'}
+                        {entry.type === 'decision' ? 'DECISION' : entry.type === 'randomEvent' ? 'EVENT' : entry.type === 'action' ? 'ACTION' : 'ENTRY'}
                       </span>
                     </div>
                     <div className="ledger-entry-title-section">
@@ -115,6 +177,7 @@ const LedgerModal = ({ onClose }) => {
                       {entry.description}
                     </div>
                   )}
+                  {entry.financialChanges && getFinancialDisplay(entry.financialChanges)}
                   {entry.effects && getEffectDisplay(entry.effects)}
                 </div>
               ))

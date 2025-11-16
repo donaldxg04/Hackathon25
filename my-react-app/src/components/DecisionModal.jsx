@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 
 const DecisionModal = ({ onClose, event }) => {
-  const { applyEventStateChanges } = useGame();
+  const { applyEventStateChanges, addLedgerEntry, gameState, formatDate } = useGame();
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -16,10 +16,41 @@ const DecisionModal = ({ onClose, event }) => {
 
   // Apply the hardcoded state changes and close modal
   // This is called regardless of which choice the user clicks
-  const handleChoice = () => {
+  const handleChoice = (choiceType) => {
     if (event && event.stateChanges) {
       applyEventStateChanges(event.stateChanges);
     }
+    
+    // Log decision to ledger
+    if (event) {
+      const choice = event.hasChoice 
+        ? (choiceType === 'accept' ? event.choices.accept : event.choices.decline)
+        : 'Continue';
+      
+      // Extract stat changes from stateChanges
+      const effects = {
+        health: event.stateChanges?.health || 0,
+        stress: event.stateChanges?.stress || 0,
+        happiness: event.stateChanges?.happiness || 0
+      };
+      
+      // Extract financial changes (exclude stat changes)
+      const financialChanges = { ...event.stateChanges };
+      delete financialChanges.health;
+      delete financialChanges.stress;
+      delete financialChanges.happiness;
+      
+      addLedgerEntry({
+        type: 'decision',
+        title: event.title || 'Decision',
+        description: event.description || '',
+        choice: choice,
+        effects: effects,
+        financialChanges: Object.keys(financialChanges).length > 0 ? financialChanges : null,
+        date: formatDate(gameState.currentDate)
+      });
+    }
+    
     onClose();
   };
 
@@ -40,15 +71,15 @@ const DecisionModal = ({ onClose, event }) => {
           <div className="decision-buttons">
             {event.hasChoice ? (
               <>
-                <button className="btn-decision btn-accept" onClick={handleChoice}>
+                <button className="btn-decision btn-accept" onClick={() => handleChoice('accept')}>
                   {event.choices.accept}
                 </button>
-                <button className="btn-decision btn-decline" onClick={handleChoice}>
+                <button className="btn-decision btn-decline" onClick={() => handleChoice('decline')}>
                   {event.choices.decline}
                 </button>
               </>
             ) : (
-              <button className="btn-decision btn-accept" onClick={handleChoice}>
+              <button className="btn-decision btn-accept" onClick={() => handleChoice('continue')}>
                 Continue
               </button>
             )}
