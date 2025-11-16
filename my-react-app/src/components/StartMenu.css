@@ -1,0 +1,375 @@
+/* ===================================
+   Start Menu Overlay & Card
+   =================================== */
+
+.start-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.start-menu-card {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 800px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  color: #fff;
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===================================
+   Typography
+   =================================== */
+
+.start-menu-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.start-menu-intro {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #d4e8f0;
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 0 20px;
+}
+
+.start-menu-subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #a8d8ea;
+  margin-bottom: 16px;
+}
+
+/* ===================================
+   Form Section
+   =================================== */
+
+.start-menu-section {
+  margin-bottom: 32px;
+}
+
+.start-menu-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #a8d8ea;
+  margin-bottom: 8px;
+}
+
+.start-menu-input {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #fff;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.start-menu-input:focus {
+  outline: none;
+  border-color: #4ade80;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.1);
+}
+
+.start-menu-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===================================
+   Choice Cards
+   =================================== */
+
+.choice-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.choice-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.choice-selectable {
+  cursor: pointer;
+}
+
+.choice-selectable:hover {
+  border-color: rgba(74, 222, 128, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(74, 222, 128, 0.2);
+}
+
+.choice-selectable:hover::before {
+  opacity: 1;
+}
+
+.choice-selected {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  box-shadow: 0 8px 24px rgba(74, 222, 128, 0.3);
+}
+
+.choice-selected::before {
+  opacity: 1;
+}
+
+.choice-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.choice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.choice-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #a8d8ea;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.choice-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.available-badge {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+  border: 1px solid #4ade80;
+}
+
+.disabled-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #f87171;
+}
+
+.choice-occupation {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 12px 0;
+}
+
+.choice-description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #d4e8f0;
+  margin: 0;
+}
+
+.choice-selected-indicator {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: rgba(74, 222, 128, 0.2);
+  border: 1px solid #4ade80;
+  border-radius: 8px;
+  color: #4ade80;
+  font-weight: 600;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ===================================
+   Continue Button
+   =================================== */
+
+.start-menu-continue {
+  width: 100%;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 8px;
+}
+
+.continue-enabled {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  color: #1f1f1f;
+  box-shadow: 0 8px 20px rgba(74, 222, 128, 0.4);
+}
+
+.continue-enabled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(74, 222, 128, 0.5);
+}
+
+.continue-enabled:active {
+  transform: translateY(0);
+}
+
+.continue-disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+.start-menu-hint {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #f59e0b;
+  font-style: italic;
+}
+
+.unavailable-message {
+  margin-top: 16px;
+  padding: 14px 20px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #f87171;
+  border-radius: 12px;
+  color: #fca5a5;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===================================
+   Responsive Design
+   =================================== */
+
+@media (max-width: 768px) {
+  .start-menu-card {
+    padding: 30px 24px;
+  }
+
+  .start-menu-title {
+    font-size: 26px;
+  }
+
+  .start-menu-intro {
+    font-size: 15px;
+    padding: 0 10px;
+  }
+
+  .start-menu-subtitle {
+    font-size: 18px;
+  }
+
+  .choice-occupation {
+    font-size: 18px;
+  }
+
+  .choice-description {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .start-menu-overlay {
+    padding: 16px;
+  }
+
+  .start-menu-card {
+    padding: 24px 20px;
+  }
+
+  .start-menu-title {
+    font-size: 22px;
+  }
+
+  .start-menu-intro {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .choice-card {
+    padding: 20px;
+  }
+
+  .choice-occupation {
+    font-size: 16px;
+  }
+
+  .choice-description {
+    font-size: 13px;
+  }
+
+  .start-menu-continue {
+    font-size: 16px;
+    padding: 14px 24px;
+  }
+}

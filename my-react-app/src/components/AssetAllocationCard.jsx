@@ -18,17 +18,30 @@ const AssetAllocationCard = ({ onClick }) => {
   const { gameState } = useGame();
   const allocation = gameState.finance.assetAllocation;
 
+  // Calculate total portfolio value (all stock positions)
+  const portfolioValue = gameState.markets.positions.reduce((total, position) => {
+    return total + (position.shares * position.price);
+  }, 0);
+
+  // Create adjusted allocation with investments including portfolio value
+  const adjustedAllocation = {};
+  for (const key in allocation) {
+    adjustedAllocation[key] = key === 'investments'
+      ? allocation[key] + portfolioValue
+      : allocation[key];
+  }
+
   // Only count positive values for the pie chart
-  const positiveValues = Object.values(allocation).filter(val => val > 0);
+  const positiveValues = Object.values(adjustedAllocation).filter(val => val > 0);
   const total = positiveValues.reduce((sum, val) => sum + val, 0);
 
   const segments = [];
-  for (const key in allocation) {
-    if (allocation[key] > 0) {
+  for (const key in adjustedAllocation) {
+    if (adjustedAllocation[key] > 0) {
       segments.push({
         label: ASSET_LABELS[key],
-        value: allocation[key],
-        percentage: (allocation[key] / total) * 100,
+        value: adjustedAllocation[key],
+        percentage: (adjustedAllocation[key] / total) * 100,
         color: ASSET_COLORS[key],
         key
       });
