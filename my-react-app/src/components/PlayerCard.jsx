@@ -1,7 +1,7 @@
 import { useGame } from '../context/GameContext';
 
 const PlayerCard = () => {
-  const { gameState, updateStats } = useGame();
+  const { gameState } = useGame();
 
   // Safety checks
   if (!gameState?.player || !gameState?.stats) {
@@ -11,13 +11,6 @@ const PlayerCard = () => {
       </div>
     );
   }
-
-  const triggerRandomEvent = () => {
-    const healthChange = Math.floor(Math.random() * 31) - 15;
-    const stressChange = Math.floor(Math.random() * 31) - 15;
-    const happinessChange = Math.floor(Math.random() * 31) - 15;
-    updateStats(healthChange, stressChange, happinessChange);
-  };
 
   const player = gameState.player || {};
   const stats = gameState.stats || { health: 0, stress: 0, happiness: 0 };
@@ -73,10 +66,6 @@ const PlayerCard = () => {
             <div className="bar-fill happiness-bar" style={{ width: `${stats.happiness ?? 0}%` }}></div>
           </div>
         </div>
-      </div>
-
-      <div className="test-controls">
-        <button className="btn-primary" onClick={triggerRandomEvent}>Random Day Event</button>
       </div>
     </div>
   );
