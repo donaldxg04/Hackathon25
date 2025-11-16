@@ -47,7 +47,7 @@ const DecisionModal = ({ onClose, event }) => {
         choice: choice,
         effects: effects,
         financialChanges: Object.keys(financialChanges).length > 0 ? financialChanges : null,
-        date: formatDate(gameState.currentDate)
+        date: gameState.currentDate ? formatDate(gameState.currentDate) : formatDate(new Date())
       });
     }
     

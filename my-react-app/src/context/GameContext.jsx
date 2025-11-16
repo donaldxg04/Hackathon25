@@ -230,12 +230,26 @@ export const GameProvider = ({ children }) => {
     loadStockData();
   }, []);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = useCallback((amount) => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return '$0.00';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
-  };
+  }, []);
+
+  const formatDate = useCallback((date) => {
+    if (!date) return 'Invalid Date';
+    // Ensure date is a Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Invalid Date';
+    
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+  }, []);
 
   const clampStat = (value) => {
     return Math.max(0, Math.min(100, value));
@@ -294,11 +308,11 @@ export const GameProvider = ({ children }) => {
         
         const newEntry = {
           id: Date.now() + Math.random(),
-          timestamp: new Date(prev.currentDate),
+          timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
           type: 'action',
           title: '401k Settings Updated',
           description: changes.join(', '),
-          date: formatDate(prev.currentDate)
+          date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
         };
         newLedger = [...prev.ledger, newEntry];
       }
@@ -360,7 +374,7 @@ export const GameProvider = ({ children }) => {
 
       const newEntry = {
         id: Date.now() + Math.random(),
-        timestamp: new Date(prev.currentDate),
+        timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
         type: 'action',
         title: 'Fund Transfer',
         description: `Transferred ${formatCurrency(amount)} from ${accountLabels[fromKey] || fromKey} to ${accountLabels[toKey] || toKey}`,
@@ -368,7 +382,7 @@ export const GameProvider = ({ children }) => {
           [fromKey]: -amount,
           [toKey]: amount
         },
-        date: formatDate(prev.currentDate)
+        date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
       };
 
       return {
@@ -427,14 +441,14 @@ export const GameProvider = ({ children }) => {
       // Add ledger entry
       const newEntry = {
         id: Date.now() + Math.random(),
-        timestamp: new Date(prev.currentDate),
+        timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
         type: 'action',
         title: 'Stock Purchase',
         description: `Bought ${shares} shares of ${symbol} at ${formatCurrency(price)} per share (Total: ${formatCurrency(cost)})`,
         financialChanges: {
           investments: -cost
         },
-        date: formatDate(prev.currentDate)
+        date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
       };
 
       return {
@@ -486,14 +500,14 @@ export const GameProvider = ({ children }) => {
       // Add ledger entry
       const newEntry = {
         id: Date.now() + Math.random(),
-        timestamp: new Date(prev.currentDate),
+        timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
         type: 'action',
         title: 'Stock Sale',
         description: `Sold ${shares} shares of ${symbol} at ${formatCurrency(price)} per share (Total: ${formatCurrency(proceeds)})`,
         financialChanges: {
           investments: proceeds
         },
-        date: formatDate(prev.currentDate)
+        date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
       };
 
       return {
@@ -521,17 +535,6 @@ export const GameProvider = ({ children }) => {
     const position = gameState.markets.positions.find(p => p.symbol === symbol);
     return position ? position.price : 0;
   }, [gameState.markets.positions]);
-
-  const formatDate = (date) => {
-    if (!date) return 'Invalid Date';
-    // Ensure date is a Date object
-    const dateObj = date instanceof Date ? date : new Date(date);
-    if (isNaN(dateObj.getTime())) return 'Invalid Date';
-    
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    return `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
-  };
 
   const formatMonthYear = (date) => {
     if (!date) return 'Invalid Date';
@@ -787,14 +790,14 @@ export const GameProvider = ({ children }) => {
       
       const newEntry = {
         id: Date.now() + Math.random(),
-        timestamp: new Date(prev.currentDate),
+        timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
         type: 'action',
         title: 'Expense Updated',
         description: `${expenseLabels[expenseKey] || expenseKey}: ${formatCurrency(oldAmount)} → ${formatCurrency(newAmount)}`,
         financialChanges: {
           expenses: { [expenseKey]: newAmount - oldAmount }
         },
-        date: formatDate(prev.currentDate)
+        date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
       };
       
       return {
@@ -825,14 +828,14 @@ export const GameProvider = ({ children }) => {
       
       const newEntry = {
         id: Date.now() + Math.random(),
-        timestamp: new Date(prev.currentDate),
+        timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
         type: 'action',
         title: 'Expense Added',
         description: `Added ${expenseLabels[expenseKey] || expenseKey}: ${formatCurrency(newAmount)}`,
         financialChanges: {
           expenses: { [expenseKey]: newAmount }
         },
-        date: formatDate(prev.currentDate)
+        date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
       };
       
       return {
@@ -868,14 +871,14 @@ export const GameProvider = ({ children }) => {
         
         const newEntry = {
           id: Date.now() + Math.random(),
-          timestamp: new Date(prev.currentDate),
+          timestamp: prev.currentDate ? new Date(prev.currentDate) : new Date(),
           type: 'action',
           title: 'Expense Removed',
           description: `Removed ${expenseLabels[expenseKey] || expenseKey} (was ${formatCurrency(oldAmount)})`,
           financialChanges: {
             expenses: { [expenseKey]: -oldAmount }
           },
-          date: formatDate(prev.currentDate)
+          date: prev.currentDate ? formatDate(prev.currentDate) : formatDate(new Date())
         };
         
         return {
